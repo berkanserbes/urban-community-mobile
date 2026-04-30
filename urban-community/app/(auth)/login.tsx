@@ -3,12 +3,15 @@ import { Link } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
 import { KeyboardAvoidingView, Platform, Text, View } from 'react-native';
 import { Button } from '@/components/ui/Button';
+import { Checkbox } from '@/components/ui/Checkbox';
 import { Input } from '@/components/ui/Input';
 import { ScreenContainer } from '@/components/layout/ScreenContainer';
-import { useLogin, loginSchema, type LoginFormValues } from '@/features/auth';
+import { useLogin, loginSchema, type LoginFormValues, useAuthStore } from '@/features/auth';
 
 export default function LoginScreen() {
   const { mutate: login, isPending, error } = useLogin();
+  const rememberMe = useAuthStore((s) => s.rememberMe);
+  const setRememberMe = useAuthStore((s) => s.setRememberMe);
 
   const {
     control,
@@ -70,6 +73,14 @@ export default function LoginScreen() {
                 />
               )}
             />
+
+            <View className="flex-row items-center justify-end">
+              <Checkbox
+                label="Beni hatırla"
+                checked={rememberMe}
+                onChange={setRememberMe}
+              />
+            </View>
 
             {error && (
               <Text className="text-sm text-red-500 text-center">
