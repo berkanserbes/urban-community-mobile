@@ -9,8 +9,15 @@ export function useLogin() {
 
   return useMutation({
     mutationFn: (data: LoginFormValues) => authApi.login(data),
-    onSuccess: ({ token, user }) => {
-      login(token.accessToken, user);
+    onSuccess: (data) => {
+      login(data.accessToken, {
+        id: data.userId,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        role: data.role,
+        neighborhoodId: data.neighborhoodId,
+      });
       router.replace('/');
     },
   });

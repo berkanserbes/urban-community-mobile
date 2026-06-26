@@ -10,11 +10,7 @@ export const registerSchema = z
     firstName: z.string().min(2, 'Ad en az 2 karakter olmalıdır'),
     lastName: z.string().min(2, 'Soyad en az 2 karakter olmalıdır'),
     email: z.string().email('Geçerli bir e-posta adresi girin'),
-    password: z
-      .string()
-      .min(8, 'Şifre en az 8 karakter olmalıdır')
-      .regex(/[A-Z]/, 'En az bir büyük harf içermelidir')
-      .regex(/[0-9]/, 'En az bir rakam içermelidir'),
+    password: z.string().min(6, 'Şifre en az 6 karakter olmalıdır'),
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
