@@ -7,6 +7,7 @@ import { Checkbox } from '@/components/ui/Checkbox';
 import { Input } from '@/components/ui/Input';
 import { ScreenContainer } from '@/components/layout/ScreenContainer';
 import { useLogin, loginSchema, type LoginFormValues, useAuthStore } from '@/features/auth';
+import { getApiErrorMessage } from '@/lib/utils/error';
 
 export default function LoginScreen() {
   const { mutate: login, isPending, error } = useLogin();
@@ -84,7 +85,7 @@ export default function LoginScreen() {
 
             {error && (
               <Text className="text-sm text-red-500 text-center">
-                {(error as Error).message ?? 'Giriş başarısız, tekrar deneyin.'}
+                {getApiErrorMessage(error, 'Giriş başarısız, tekrar deneyin.')}
               </Text>
             )}
 

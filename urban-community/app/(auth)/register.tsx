@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { ScreenContainer } from '@/components/layout/ScreenContainer';
 import { useRegister, registerSchema, type RegisterFormValues } from '@/features/auth';
+import { getApiErrorMessage } from '@/lib/utils/error';
 
 export default function RegisterScreen() {
   const { mutate: register, isPending, error } = useRegister();
@@ -103,7 +104,7 @@ export default function RegisterScreen() {
               render={({ field: { onChange, onBlur, value } }) => (
                 <Input
                   label="Şifre"
-                  placeholder="En az 8 karakter"
+                  placeholder="En az 6 karakter"
                   isPassword
                   autoComplete="new-password"
                   onChangeText={onChange}
@@ -133,7 +134,7 @@ export default function RegisterScreen() {
 
             {error && (
               <Text className="text-sm text-red-500 text-center">
-                {(error as Error).message ?? 'Kayıt başarısız, tekrar deneyin.'}
+                {getApiErrorMessage(error, 'Kayıt başarısız, tekrar deneyin.')}
               </Text>
             )}
 
