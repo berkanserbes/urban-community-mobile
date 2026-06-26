@@ -14,6 +14,12 @@ apiClient.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  // React Native'de Axios, FormData gönderilirken default 'application/json'
+  // Content-Type'ını otomatik kaldırmaz. Manuel silmemiz gerekiyor;
+  // böylece native XHR 'multipart/form-data; boundary=...' header'ını kendisi ekler.
+  if (config.data instanceof FormData) {
+    delete config.headers['Content-Type'];
+  }
   return config;
 });
 
