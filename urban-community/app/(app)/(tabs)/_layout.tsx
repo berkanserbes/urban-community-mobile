@@ -28,6 +28,13 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="suggestions"
+        options={{
+          title: 'Öneriler',
+          tabBarIcon: () => <TabIcon label="Öneriler" emoji="💡" />,
+        }}
+      />
+      <Tabs.Screen
         name="community"
         options={{
           title: 'Topluluk',
