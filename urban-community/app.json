@@ -29,6 +29,13 @@
     "plugins": [
       "expo-router",
       [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Uygulamanın bulunduğunuz konumu kullanarak size yakın sorunları göstermesine izin verin.",
+          "locationWhenInUsePermission": "Uygulamanın bulunduğunuz konumu kullanarak size yakın sorunları göstermesine izin verin."
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "image": "./assets/images/splash-icon.png",
