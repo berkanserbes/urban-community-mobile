@@ -2,12 +2,6 @@ import { apiClient } from '@/lib/api/axios';
 import type { ApiResponse } from '@/types/api.types';
 import type { LoginFormValues, RegisterFormValues } from '../types/auth.types';
 
-export interface AuthTokenDto {
-  accessToken: string;
-  refreshToken: string;
-  expiresIn: number;
-}
-
 export interface UserDto {
   id: string;
   firstName: string;
@@ -18,8 +12,23 @@ export interface UserDto {
 }
 
 export interface LoginResponseDto {
-  token: AuthTokenDto;
-  user: UserDto;
+  accessToken: string;
+  accessTokenExpiresAt: string;
+  refreshToken: string;
+  refreshTokenExpiresAt: string;
+  userId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: 'Citizen' | 'Official' | 'Admin';
+  neighborhoodId: string | null;
+}
+
+export interface RegisterResponseDto {
+  userId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
 }
 
 export const authApi = {
@@ -28,9 +37,15 @@ export const authApi = {
       .post<ApiResponse<LoginResponseDto>>('/api/auth/login', data)
       .then((res) => res.data.data),
 
-  register: (data: Omit<RegisterFormValues, 'confirmPassword'>) =>
+  register: (data: RegisterFormValues) =>
     apiClient
-      .post<ApiResponse<LoginResponseDto>>('/api/auth/register', data)
+      .post<ApiResponse<RegisterResponseDto>>('/api/auth/register', {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        password: data.password,
+        confirmPassword: data.confirmPassword,
+      })
       .then((res) => res.data.data),
 
   logout: () => apiClient.post('/api/auth/logout'),
