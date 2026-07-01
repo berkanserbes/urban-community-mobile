@@ -1,12 +1,19 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { router } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
 import { SuggestionCard } from '@/components/ui/SuggestionCard';
 import { ScreenContainer } from '@/components/layout/ScreenContainer';
-import { useAuthStore } from '@/features/auth';
 import { useProfile } from '@/features/user';
-import { useSuggestions, useVote, type SuggestionStatus } from '@/features/suggestions';
+import {
+  getNextVoteSummary,
+  useSuggestions,
+  useVote,
+  type SuggestionListItem,
+  type SuggestionStatus,
+  type VoteSummary,
+} from '@/features/suggestions';
 
 const STATUS_FILTERS: { label: string; value: SuggestionStatus | null }[] = [
   { label: 'Tümü', value: null },
@@ -36,7 +43,11 @@ export default function SuggestionsScreen() {
     setRefreshing(false);
   }, [refetch]);
 
-  const [loadingVotes, setLoadingVotes] = useState<Record<string, boolean>>({});
+  useFocusEffect(
+    useCallback(() => {
+      void refetch();
+    }, [refetch])
+  );
 
   return (
     <ScreenContainer scrollable={false}>
@@ -125,18 +136,103 @@ function SuggestionCardWrapper({
   suggestion,
   onPress,
 }: {
-  suggestion: { id: string; upVotes: number; downVotes: number; voteScore: number; title: string; status: string; content: string; userFullName: string; createdAt: string };
+  suggestion: SuggestionListItem;
   onPress: () => void;
 }) {
   const { vote, removeVote } = useVote(suggestion.id);
+  const previousSuggestionId = useRef(suggestion.id);
+  const voteRequestLocked = useRef(false);
+  const voteSummaryRef = useRef<VoteSummary>({
+    upVotes: suggestion.upVotes,
+    downVotes: suggestion.downVotes,
+    voteScore: suggestion.voteScore,
+    currentUserVote: suggestion.currentUserVote,
+  });
+  const [isVoteSubmitting, setIsVoteSubmitting] = useState(false);
+  const [voteSummary, setVoteSummary] = useState<VoteSummary>({
+    upVotes: suggestion.upVotes,
+    downVotes: suggestion.downVotes,
+    voteScore: suggestion.voteScore,
+    currentUserVote: suggestion.currentUserVote,
+  });
+
+  useEffect(() => {
+    previousSuggestionId.current = suggestion.id;
+
+    const nextVoteSummary = {
+      upVotes: suggestion.upVotes,
+      downVotes: suggestion.downVotes,
+      voteScore: suggestion.voteScore,
+      currentUserVote: suggestion.currentUserVote,
+    };
+
+    voteRequestLocked.current = false;
+    setIsVoteSubmitting(false);
+    voteSummaryRef.current = nextVoteSummary;
+    setVoteSummary(nextVoteSummary);
+  }, [
+    suggestion.id,
+    suggestion.upVotes,
+    suggestion.downVotes,
+    suggestion.voteScore,
+    suggestion.currentUserVote,
+  ]);
+
+  const applyVoteSummary = (nextVoteSummary: VoteSummary) => {
+    voteSummaryRef.current = nextVoteSummary;
+    setVoteSummary(nextVoteSummary);
+  };
+
+  const releaseVoteLock = () => {
+    voteRequestLocked.current = false;
+    setIsVoteSubmitting(false);
+  };
+
+  const handleVote = (isUpvote: boolean) => {
+    if (voteRequestLocked.current) return;
+
+    voteRequestLocked.current = true;
+    setIsVoteSubmitting(true);
+
+    const previousVoteSummary = voteSummaryRef.current;
+    applyVoteSummary(getNextVoteSummary(previousVoteSummary, isUpvote));
+
+    vote.mutate(isUpvote, {
+      onSuccess: applyVoteSummary,
+      onError: () => applyVoteSummary(previousVoteSummary),
+      onSettled: releaseVoteLock,
+    });
+  };
+
+  const handleRemoveVote = () => {
+    if (voteRequestLocked.current) return;
+
+    voteRequestLocked.current = true;
+    setIsVoteSubmitting(true);
+
+    const previousVoteSummary = voteSummaryRef.current;
+    applyVoteSummary(getNextVoteSummary(previousVoteSummary, null));
+
+    removeVote.mutate(undefined, {
+      onSuccess: applyVoteSummary,
+      onError: () => applyVoteSummary(previousVoteSummary),
+      onSettled: releaseVoteLock,
+    });
+  };
 
   return (
     <SuggestionCard
-      suggestion={suggestion as any}
+      suggestion={{
+        ...suggestion,
+        upVotes: voteSummary.upVotes,
+        downVotes: voteSummary.downVotes,
+        voteScore: voteSummary.voteScore,
+      }}
+      currentUserVote={voteSummary.currentUserVote}
       onPress={onPress}
-      onVote={(isUpvote) => vote.mutate(isUpvote)}
-      onRemoveVote={() => removeVote.mutate()}
-      isLoadingVote={vote.isPending || removeVote.isPending}
+      onVote={handleVote}
+      onRemoveVote={handleRemoveVote}
+      isLoadingVote={isVoteSubmitting || vote.isPending || removeVote.isPending}
     />
   );
 }

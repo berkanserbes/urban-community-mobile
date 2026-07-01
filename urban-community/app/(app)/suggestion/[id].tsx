@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -17,11 +17,14 @@ import { VoteButtons } from '@/components/ui/VoteButtons';
 import { ScreenContainer } from '@/components/layout/ScreenContainer';
 import { useAuthStore } from '@/features/auth';
 import {
+  getNextVoteSummary,
   useSuggestionById,
   useVote,
+  useVoteSummary,
   useComments,
   useAddComment,
   useDeleteSuggestion,
+  type VoteSummary,
 } from '@/features/suggestions';
 
 export default function SuggestionDetailScreen() {
@@ -31,10 +34,29 @@ export default function SuggestionDetailScreen() {
   const { data: comments = [] } = useComments(id ?? null);
   const addComment = useAddComment(id ?? '');
   const { vote, removeVote } = useVote(id ?? '');
+  const { data: voteSummary, isLoading: isVoteSummaryLoading } = useVoteSummary(id ?? null);
   const deleteSuggestion = useDeleteSuggestion();
   const [newComment, setNewComment] = useState('');
+  const voteRequestLocked = useRef(false);
+  const displayedVoteSummaryRef = useRef<VoteSummary | null>(null);
+  const [isVoteSubmitting, setIsVoteSubmitting] = useState(false);
+  const [displayedVoteSummary, setDisplayedVoteSummary] = useState<VoteSummary | null>(null);
 
   const isOwner = suggestion?.userId === currentUser?.id;
+
+  useEffect(() => {
+    voteRequestLocked.current = false;
+    displayedVoteSummaryRef.current = null;
+    setIsVoteSubmitting(false);
+    setDisplayedVoteSummary(null);
+  }, [id]);
+
+  useEffect(() => {
+    if (voteSummary) {
+      displayedVoteSummaryRef.current = voteSummary;
+      setDisplayedVoteSummary(voteSummary);
+    }
+  }, [voteSummary]);
 
   if (isLoading || !suggestion) {
     return (
@@ -65,6 +87,23 @@ export default function SuggestionDetailScreen() {
     router.push(`/(app)/suggestion/create?id=${suggestion.id}` as any);
   };
 
+  const activeVoteSummary = displayedVoteSummary ?? {
+    upVotes: suggestion.upVotes,
+    downVotes: suggestion.downVotes,
+    voteScore: suggestion.voteScore,
+    currentUserVote: null,
+  };
+
+  const applyVoteSummary = (nextVoteSummary: VoteSummary) => {
+    displayedVoteSummaryRef.current = nextVoteSummary;
+    setDisplayedVoteSummary(nextVoteSummary);
+  };
+
+  const releaseVoteLock = () => {
+    voteRequestLocked.current = false;
+    setIsVoteSubmitting(false);
+  };
+
   return (
     <ScreenContainer scrollable={false}>
       <KeyboardAvoidingView
@@ -87,13 +126,47 @@ export default function SuggestionDetailScreen() {
                 <StatusBadge status={suggestion.status} size="md" />
               </View>
               <VoteButtons
-                upVotes={suggestion.upVotes}
-                downVotes={suggestion.downVotes}
-                voteScore={suggestion.voteScore}
+                upVotes={activeVoteSummary.upVotes}
+                downVotes={activeVoteSummary.downVotes}
+                voteScore={activeVoteSummary.voteScore}
+                currentUserVote={activeVoteSummary.currentUserVote}
                 size="md"
-                onVote={(isUpvote) => vote.mutate(isUpvote)}
-                onRemoveVote={() => removeVote.mutate()}
-                isLoading={vote.isPending || removeVote.isPending}
+                onVote={(isUpvote) => {
+                  if (voteRequestLocked.current) return;
+
+                  voteRequestLocked.current = true;
+                  setIsVoteSubmitting(true);
+
+                  const previousVoteSummary = displayedVoteSummaryRef.current ?? activeVoteSummary;
+                  applyVoteSummary(getNextVoteSummary(previousVoteSummary, isUpvote));
+
+                  vote.mutate(isUpvote, {
+                    onSuccess: applyVoteSummary,
+                    onError: () => applyVoteSummary(previousVoteSummary),
+                    onSettled: releaseVoteLock,
+                  });
+                }}
+                onRemoveVote={() => {
+                  if (voteRequestLocked.current) return;
+
+                  voteRequestLocked.current = true;
+                  setIsVoteSubmitting(true);
+
+                  const previousVoteSummary = displayedVoteSummaryRef.current ?? activeVoteSummary;
+                  applyVoteSummary(getNextVoteSummary(previousVoteSummary, null));
+
+                  removeVote.mutate(undefined, {
+                    onSuccess: applyVoteSummary,
+                    onError: () => applyVoteSummary(previousVoteSummary),
+                    onSettled: releaseVoteLock,
+                  });
+                }}
+                isLoading={
+                  isVoteSubmitting ||
+                  vote.isPending ||
+                  removeVote.isPending ||
+                  (isVoteSummaryLoading && !voteSummary)
+                }
               />
             </View>
 

@@ -22,10 +22,7 @@ export function SuggestionCard({
   isLoadingVote = false,
 }: SuggestionCardProps) {
   return (
-    <Pressable
-      onPress={onPress}
-      className="bg-white dark:bg-gray-800 rounded-xl p-4 mb-3 border border-gray-200 dark:border-gray-700 active:opacity-70"
-    >
+    <View className="bg-white dark:bg-gray-800 rounded-xl p-4 mb-3 border border-gray-200 dark:border-gray-700">
       <View className="flex-row gap-3">
         <VoteButtons
           upVotes={suggestion.upVotes}
@@ -36,7 +33,7 @@ export function SuggestionCard({
           onRemoveVote={onRemoveVote}
           isLoading={isLoadingVote}
         />
-        <View className="flex-1 min-w-0">
+        <Pressable onPress={onPress} className="flex-1 min-w-0 active:opacity-70">
           <View className="flex-row items-start justify-between gap-2 mb-1">
             <Text
               className="text-base font-semibold text-gray-900 dark:text-white flex-1"
@@ -59,8 +56,8 @@ export function SuggestionCard({
               {new Date(suggestion.createdAt).toLocaleDateString('tr-TR')}
             </Text>
           </View>
-        </View>
+        </Pressable>
       </View>
-    </Pressable>
+    </View>
   );
 }

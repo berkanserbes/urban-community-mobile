@@ -9,6 +9,7 @@ interface VoteButtonsProps {
   onVote: (isUpvote: boolean) => void;
   onRemoveVote: () => void;
   isLoading?: boolean;
+  disabled?: boolean;
   size?: 'sm' | 'md';
 }
 
@@ -19,9 +20,14 @@ export function VoteButtons({
   onVote,
   onRemoveVote,
   isLoading = false,
+  disabled = false,
   size = 'sm',
 }: VoteButtonsProps) {
+  const isDisabled = isLoading || disabled;
+
   const handleUpvote = () => {
+    if (isDisabled) return;
+
     if (currentUserVote === true) {
       onRemoveVote();
     } else {
@@ -30,6 +36,8 @@ export function VoteButtons({
   };
 
   const handleDownvote = () => {
+    if (isDisabled) return;
+
     if (currentUserVote === false) {
       onRemoveVote();
     } else {
@@ -39,10 +47,10 @@ export function VoteButtons({
 
   if (size === 'md') {
     return (
-      <View className="flex-row items-center gap-4">
+      <View className={`flex-row items-center gap-4 ${disabled ? 'opacity-50' : ''}`}>
         <Pressable
           onPress={handleUpvote}
-          disabled={isLoading}
+          disabled={isDisabled}
           className={`w-10 h-10 rounded-full items-center justify-center ${
             currentUserVote === true
               ? 'bg-blue-100 dark:bg-blue-900/30'
@@ -64,7 +72,7 @@ export function VoteButtons({
         </Text>
         <Pressable
           onPress={handleDownvote}
-          disabled={isLoading}
+          disabled={isDisabled}
           className={`w-10 h-10 rounded-full items-center justify-center ${
             currentUserVote === false
               ? 'bg-red-100 dark:bg-red-900/30'
@@ -82,10 +90,10 @@ export function VoteButtons({
   }
 
   return (
-    <View className="items-center gap-1">
+    <View className={`items-center gap-1 ${disabled ? 'opacity-50' : ''}`}>
       <Pressable
         onPress={handleUpvote}
-        disabled={isLoading}
+        disabled={isDisabled}
         className="p-1 active:opacity-70"
       >
         {isLoading ? (
@@ -111,7 +119,7 @@ export function VoteButtons({
       </Text>
       <Pressable
         onPress={handleDownvote}
-        disabled={isLoading}
+        disabled={isDisabled}
         className="p-1 active:opacity-70"
       >
         <Ionicons

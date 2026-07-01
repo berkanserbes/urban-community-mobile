@@ -11,6 +11,7 @@ export interface SuggestionListItem {
   voteScore: number;
   upVotes: number;
   downVotes: number;
+  currentUserVote: boolean | null;
   userId: string;
   userFullName: string;
   createdAt: string;
@@ -47,6 +48,18 @@ export interface SuggestionComment {
   updatedAt: string | null;
 }
 
+type SuggestionListItemResponse = Omit<SuggestionListItem, 'currentUserVote'> & {
+  currentUserIsUpvote?: boolean | null;
+};
+
+function unwrapApiData<T>(response: ApiResponse<T>): T {
+  if (!response.isSuccess || response.data == null) {
+    throw new Error(response.errors?.[0] ?? 'İşlem başarısız.');
+  }
+
+  return response.data;
+}
+
 export const suggestionsApi = {
   getSuggestions: (params: {
     status?: SuggestionStatus;
@@ -56,8 +69,17 @@ export const suggestionsApi = {
     provinceId?: string;
   }): Promise<SuggestionListItem[]> =>
     apiClient
-      .get<ApiResponse<SuggestionListItem[]>>('/api/suggestions', { params })
-      .then((res) => res.data.data),
+      .get<ApiResponse<SuggestionListItemResponse[]>>('/api/suggestions', { params })
+      .then((res) =>
+        res.data.data.map((item) => {
+          const { currentUserIsUpvote, ...suggestion } = item;
+
+          return {
+            ...suggestion,
+            currentUserVote: currentUserIsUpvote ?? null,
+          };
+        })
+      ),
 
   getSuggestionById: (id: string): Promise<SuggestionDetail> =>
     apiClient
@@ -69,15 +91,46 @@ export const suggestionsApi = {
       .post<ApiResponse<SuggestionDetail>>('/api/suggestions', data)
       .then((res) => res.data.data),
 
-  vote: (suggestionId: string, isUpvote: boolean) =>
+  vote: (suggestionId: string, isUpvote: boolean): Promise<VoteSummary> =>
     apiClient
-      .put<ApiResponse<VoteSummary>>(`/api/suggestions/${suggestionId}/votes`, { isUpvote })
-      .then((res) => res.data.data),
+      .put<ApiResponse<{
+        suggestionId: string;
+        upvoteCount: number;
+        downvoteCount: number;
+        voteScore: number;
+        currentUserIsUpvote: boolean;
+        message: string;
+      }>>(`/api/suggestions/${suggestionId}/votes`, { isUpvote })
+      .then((res) => {
+        const data = unwrapApiData(res.data);
 
-  removeVote: (suggestionId: string) =>
+        return {
+          upVotes: data.upvoteCount,
+          downVotes: data.downvoteCount,
+          voteScore: data.voteScore,
+          currentUserVote: data.currentUserIsUpvote,
+        };
+      }),
+
+  removeVote: (suggestionId: string): Promise<VoteSummary> =>
     apiClient
-      .delete<ApiResponse<VoteSummary>>(`/api/suggestions/${suggestionId}/votes`)
-      .then((res) => res.data.data),
+      .delete<ApiResponse<{
+        suggestionId: string;
+        upvoteCount: number;
+        downvoteCount: number;
+        voteScore: number;
+        message: string;
+      }>>(`/api/suggestions/${suggestionId}/votes`)
+      .then((res) => {
+        const data = unwrapApiData(res.data);
+
+        return {
+          upVotes: data.upvoteCount,
+          downVotes: data.downvoteCount,
+          voteScore: data.voteScore,
+          currentUserVote: null,
+        };
+      }),
 
   getComments: (suggestionId: string): Promise<SuggestionComment[]> =>
     apiClient
@@ -93,6 +146,26 @@ export const suggestionsApi = {
     apiClient
       .put<ApiResponse<SuggestionDetail>>(`/api/suggestions/${id}`, data)
       .then((res) => res.data.data),
+
+  getVoteSummary: (suggestionId: string): Promise<VoteSummary> =>
+    apiClient
+      .get<ApiResponse<{
+        suggestionId: string;
+        upvoteCount: number;
+        downvoteCount: number;
+        voteScore: number;
+        currentUserIsUpvote: boolean | null;
+      }>>(`/api/suggestions/${suggestionId}/votes/summary`)
+      .then((res) => {
+        const data = unwrapApiData(res.data);
+
+        return {
+          upVotes: data.upvoteCount,
+          downVotes: data.downvoteCount,
+          voteScore: data.voteScore,
+          currentUserVote: data.currentUserIsUpvote,
+        };
+      }),
 
   deleteSuggestion: (id: string) =>
     apiClient
