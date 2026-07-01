@@ -1,12 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { ActivityIndicator, Image, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Image, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { AnnouncementCard } from '@/components/ui/AnnouncementCard';
 import { CommunityPostCard } from '@/components/ui/CommunityPostCard';
 import { FeedSection } from '@/components/ui/FeedSection';
 import { NotificationIcon } from '@/components/ui/NotificationIcon';
 import { ReportCard } from '@/components/ui/ReportCard';
-import { ScreenContainer } from '@/components/layout/ScreenContainer';
 import { useAuthStore } from '@/features/auth';
 import { useAnnouncements } from '@/features/announcements';
 import { useReports } from '@/features/reports';
@@ -70,10 +70,10 @@ export default function HomeScreen() {
   const recentPosts = communityPosts.slice(0, 3);
 
   return (
-    <ScreenContainer scrollable={false}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-gray-900" edges={['top', 'left', 'right']}>
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingBottom: 16 }}
+        contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 0 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -185,6 +185,6 @@ export default function HomeScreen() {
           </FeedSection>
         </View>
       </ScrollView>
-    </ScreenContainer>
+    </SafeAreaView>
   );
 }
