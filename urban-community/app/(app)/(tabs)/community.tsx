@@ -113,7 +113,7 @@ export default function CommunityScreen() {
 
         <Pressable
           onPress={() => router.push('/(app)/community-post/create' as any)}
-          className="absolute bottom-6 right-6 w-14 h-14 rounded-full bg-blue-600 items-center justify-center active:opacity-80 shadow-lg"
+          className="absolute -bottom-2 right-0 w-14 h-14 rounded-full bg-blue-600 items-center justify-center active:opacity-80 shadow-lg"
         >
           <Ionicons name="add" size={28} color="white" />
         </Pressable>
