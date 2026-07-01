@@ -101,6 +101,20 @@ export default function SuggestionDetailScreen() {
               {suggestion.content}
             </Text>
 
+            {suggestion.officialResponse && (
+              <View className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/40 rounded-xl p-4 mb-6">
+                <View className="flex-row items-center gap-2 mb-2">
+                  <Ionicons name="shield-checkmark" size={18} color="#2563EB" />
+                  <Text className="text-sm font-bold text-blue-800 dark:text-blue-300">
+                    Resmi Yanıt
+                  </Text>
+                </View>
+                <Text className="text-sm text-blue-700 dark:text-blue-200 leading-5">
+                  {suggestion.officialResponse}
+                </Text>
+              </View>
+            )}
+
             <View className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 gap-3 mb-6">
               <View className="flex-row items-center gap-2">
                 <Ionicons name="person-outline" size={16} color="#64748b" />

@@ -28,6 +28,7 @@ export interface SuggestionDetail {
   downVotes: number;
   createdAt: string;
   updatedAt: string | null;
+  officialResponse?: string | null;
 }
 
 export interface VoteSummary {

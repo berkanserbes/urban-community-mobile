@@ -13,6 +13,7 @@ const STATUS_FILTERS: { label: string; value: SuggestionStatus | null }[] = [
   { label: 'Aktif', value: 'Active' },
   { label: 'İncelemede', value: 'Reviewing' },
   { label: 'Uygulamada', value: 'Implementation' },
+  { label: 'Kapatıldı', value: 'Closed' },
 ];
 
 export default function SuggestionsScreen() {

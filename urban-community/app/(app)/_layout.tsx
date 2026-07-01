@@ -1,29 +1,41 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { Redirect, Stack } from 'expo-router';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useAuthStore } from '@/features/auth';
 import { notificationKeys } from '@/features/notifications';
 import { connectSignalR, disconnectSignalR, onSignalREvent } from '@/lib/api/signalr';
+
+const NOTIFICATION_EVENTS = [
+  'NewNotification',
+  'SuggestionStatusChanged',
+  'SuggestionOfficialResponseUpdated',
+  'FileUploadCompleted',
+  'FileUploadFailed',
+] as const;
 
 export default function AppLayout() {
   const token = useAuthStore((s) => s.token);
   const user = useAuthStore((s) => s.user);
   const queryClient = useQueryClient();
 
+  const invalidateNotifications = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: notificationKeys.all });
+  }, [queryClient]);
+
   useEffect(() => {
     if (!token) return;
 
     connectSignalR().catch(() => {});
 
-    const unsub1 = onSignalREvent('NewNotification', () => {
-      queryClient.invalidateQueries({ queryKey: notificationKeys.all });
-    });
+    const unsubs = NOTIFICATION_EVENTS.map((event) =>
+      onSignalREvent(event, invalidateNotifications)
+    );
 
     return () => {
-      unsub1();
+      unsubs.forEach((unsub) => unsub());
       disconnectSignalR();
     };
-  }, [token, queryClient]);
+  }, [token, invalidateNotifications]);
 
   if (!token) {
     return <Redirect href="/(auth)/login" />;
