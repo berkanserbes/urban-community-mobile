@@ -4,9 +4,11 @@ import { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Dimensions,
   FlatList,
   Image,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -36,6 +38,7 @@ export default function CommunityPostDetailScreen() {
   const deletePost = useDeletePost();
   const queryClient = useQueryClient();
   const [newComment, setNewComment] = useState('');
+  const [previewIndex, setPreviewIndex] = useState<number | null>(null);
 
   const { data: comments = [] } = useQuery({
     queryKey: [...communityKeys.detail(id ?? ''), 'comments'],
@@ -125,22 +128,56 @@ export default function CommunityPostDetailScreen() {
                 keyExtractor={(item) => item.id}
                 className="h-56 mb-4"
                 renderItem={({ item }) => (
-                  <View className="w-screen h-56 rounded-xl overflow-hidden mr-2 bg-gray-100 dark:bg-gray-800">
-                    {item.mediaType === 'Image' ? (
-                      <Image
-                        source={{ uri: toAbsoluteUrl(item.url)! }}
-                        className="w-full h-full"
-                        resizeMode="cover"
-                      />
-                    ) : (
-                      <View className="flex-1 items-center justify-center">
-                        <Ionicons name="videocam-outline" size={48} color="#94a3b8" />
-                      </View>
-                    )}
-                  </View>
+                  <Pressable onPress={() => setPreviewIndex(post.media.indexOf(item))}>
+                    <View className="w-screen h-56 rounded-xl overflow-hidden mr-2 bg-gray-100 dark:bg-gray-800">
+                      {item.mediaType === 'Image' ? (
+                        <Image
+                          source={{ uri: toAbsoluteUrl(item.url)! }}
+                          className="w-full h-full"
+                          resizeMode="cover"
+                        />
+                      ) : (
+                        <View className="flex-1 items-center justify-center">
+                          <Ionicons name="videocam-outline" size={48} color="#94a3b8" />
+                        </View>
+                      )}
+                    </View>
+                  </Pressable>
                 )}
               />
             )}
+
+            <Modal
+              visible={previewIndex !== null}
+              transparent
+              animationType="fade"
+              statusBarTranslucent
+              onRequestClose={() => setPreviewIndex(null)}
+            >
+              <View className="flex-1 bg-black/90 justify-center">
+                <Pressable className="flex-1 justify-center" onPress={() => setPreviewIndex(null)}>
+                  {previewIndex !== null && post.media[previewIndex] && (
+                    <Image
+                      source={{ uri: toAbsoluteUrl(post.media[previewIndex].url)! }}
+                      className="w-full"
+                      style={{ height: Dimensions.get('window').height * 0.65 }}
+                      resizeMode="contain"
+                    />
+                  )}
+                </Pressable>
+                <View className="flex-row items-center justify-between px-5 pb-8 pt-4">
+                  <Text className="text-sm text-white/60">
+                    {previewIndex !== null ? previewIndex + 1 : 0} / {post.media.length}
+                  </Text>
+                  <Pressable
+                    className="w-10 h-10 rounded-full bg-white/15 items-center justify-center active:bg-white/30"
+                    onPress={() => setPreviewIndex(null)}
+                  >
+                    <Ionicons name="close" size={22} color="white" />
+                  </Pressable>
+                </View>
+              </View>
+            </Modal>
 
             <View className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 gap-3 mb-6">
               <View className="flex-row items-center gap-2">
