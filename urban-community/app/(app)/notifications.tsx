@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { useState , useCallback} from 'react';
 import {
   ActivityIndicator,
@@ -19,6 +20,44 @@ import {
   notificationKeys
 } from '@/features/notifications';
 import { useQueryClient } from '@tanstack/react-query';
+import type { NotificationDto } from '@/features/notifications';
+
+function handleNotificationPress(notification: NotificationDto) {
+  if (!notification.relatedEntityId) return;
+
+  switch (notification.relatedEntityType) {
+    case 'Report':
+      router.push(`/(app)/report/${notification.relatedEntityId}` as any);
+      break;
+    case 'Suggestion':
+      router.push(`/(app)/suggestion/${notification.relatedEntityId}` as any);
+      break;
+    case 'Announcement':
+      router.push(`/(app)/announcement/${notification.relatedEntityId}` as any);
+      break;
+    case 'CommunityPost':
+      router.push(`/(app)/community-post/${notification.relatedEntityId}` as any);
+      break;
+  }
+}
+
+function handleDeleteNotification(item: NotificationDto, queryClient: ReturnType<typeof useQueryClient>) {
+  Alert.alert(
+    'Bildirimi Sil',
+    'Bu bildirim silinsin mi?',
+    [
+      { text: 'İptal', style: 'cancel' },
+      {
+        text: 'Sil',
+        style: 'destructive',
+        onPress: async () => {
+          await notificationsApi.deleteNotification(item.id);
+          queryClient.invalidateQueries({ queryKey: notificationKeys.all });
+        },
+      },
+    ],
+  );
+}
 
 export default function NotificationsScreen() {
   const [refreshing, setRefreshing] = useState(false);
@@ -114,12 +153,9 @@ export default function NotificationsScreen() {
             renderItem={({ item }) => (
               <NotificationCard
                 notification={item}
-                onPress={() => {}}
+                onPress={() => handleNotificationPress(item)}
                 onMarkRead={() => markAsRead.mutate(item.id)}
-                onDelete={async () => {
-                  await notificationsApi.deleteNotification(item.id);
-                  queryClient.invalidateQueries({ queryKey: notificationKeys.all });
-                }}
+                onDelete={() => handleDeleteNotification(item, queryClient)}
               />
             )}
             refreshControl={
