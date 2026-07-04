@@ -6,6 +6,7 @@ import { ReportCard } from '@/components/ui/ReportCard';
 import { ScreenContainer } from '@/components/layout/ScreenContainer';
 import { useAuthStore } from '@/features/auth';
 import { useMyReports, useReports, type ReportStatus } from '@/features/reports';
+import { useProfile } from '@/features/user';
 
 const STATUS_FILTERS: { label: string; value: ReportStatus | null }[] = [
   { label: 'Tümü', value: null },
@@ -17,16 +18,18 @@ const STATUS_FILTERS: { label: string; value: ReportStatus | null }[] = [
 
 export default function ReportsScreen() {
   const user = useAuthStore((s) => s.user);
+  const { data: profile } = useProfile();
   const [activeFilter, setActiveFilter] = useState<ReportStatus | null>(null);
   const [showMine, setShowMine] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const neighborhoodId = profile?.neighborhoodId ?? user?.neighborhoodId ?? undefined;
 
   const {
     data: allReports = [],
     isLoading: loadingAll,
     refetch: refetchAll,
   } = useReports({
-    neighborhoodId: user?.neighborhoodId ?? undefined,
+    neighborhoodId,
     status: activeFilter ?? undefined,
   });
 
