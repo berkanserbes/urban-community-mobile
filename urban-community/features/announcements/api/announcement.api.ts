@@ -6,7 +6,12 @@ export interface AnnouncementDto {
   title: string;
   content: string;
   userId: string;
-  publisherFullName: string;
+  userFullName: string;
+  scope: 'All' | 'Province' | 'District' | 'Neighborhood';
+  provinceId: string | null;
+  provinceName: string | null;
+  districtId: string | null;
+  districtName: string | null;
   neighborhoodId: string | null;
   neighborhoodName: string | null;
   isActive: boolean;

@@ -44,7 +44,7 @@ export function AnnouncementCard({ announcement, onPress }: AnnouncementCardProp
 
       <View className="flex-row items-center justify-between">
         <Text className="text-xs text-gray-500 dark:text-gray-500">
-          {announcement.publisherFullName}
+          {announcement.userFullName}
         </Text>
         <Text className="text-xs text-gray-400 dark:text-gray-600">
           {new Date(announcement.createdAt).toLocaleDateString('tr-TR')}

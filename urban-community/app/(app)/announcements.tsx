@@ -5,17 +5,21 @@ import { AnnouncementCard } from '@/components/ui/AnnouncementCard';
 import { ScreenContainer } from '@/components/layout/ScreenContainer';
 import { useProfile } from '@/features/user';
 import { useAnnouncements } from '@/features/announcements';
+import { useAuthStore } from '@/features/auth';
 
 export default function AnnouncementsScreen() {
+  const user = useAuthStore((s) => s.user);
   const { data: profile, isLoading: profileLoading } = useProfile();
+  const neighborhoodId = profile?.neighborhoodId ?? user?.neighborhoodId ?? undefined;
   const {
     data: announcements = [],
     isLoading: announcementsLoading,
+    isError: announcementsError,
     refetch,
   } = useAnnouncements({
     provinceId: profile?.provinceId ?? undefined,
     districtId: profile?.districtId ?? undefined,
-    neighborhoodId: profile?.neighborhoodId ?? undefined,
+    neighborhoodId,
   });
 
   const [refreshing, setRefreshing] = useState(false);
@@ -47,7 +51,9 @@ export default function AnnouncementsScreen() {
         }
         ListEmptyComponent={
           <View className="items-center justify-center py-12">
-            <Text className="text-gray-500 dark:text-gray-400">Henüz duyuru yok</Text>
+            <Text className={announcementsError ? 'text-red-500' : 'text-gray-500 dark:text-gray-400'}>
+              {announcementsError ? 'Duyurular yüklenemedi' : 'Henüz duyuru yok'}
+            </Text>
           </View>
         }
         renderItem={({ item }) => (

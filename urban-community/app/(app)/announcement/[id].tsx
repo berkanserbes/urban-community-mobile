@@ -1,5 +1,5 @@
 import { useLocalSearchParams } from 'expo-router';
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 import { ScreenContainer } from '@/components/layout/ScreenContainer';
 import { useAnnouncementById } from '@/features/announcements';
 
@@ -54,7 +54,7 @@ export default function AnnouncementDetailScreen() {
           {/* Meta */}
           <View className="gap-1">
             <Text className="text-sm text-gray-600 dark:text-gray-400">
-              {announcement.publisherFullName}
+              {announcement.userFullName}
             </Text>
             <Text className="text-xs text-gray-500 dark:text-gray-500">
               {new Date(announcement.createdAt).toLocaleDateString('tr-TR', {

@@ -42,10 +42,11 @@ export default function HomeScreen() {
     neighborhoodId: user?.neighborhoodId ?? undefined,
   });
 
+  const announcementNeighborhoodId = profile?.neighborhoodId ?? user?.neighborhoodId ?? undefined;
   const { data: announcements = [], isLoading: announcementsLoading, refetch: refetchAnnouncements } = useAnnouncements({
     provinceId: profile?.provinceId ?? undefined,
     districtId: profile?.districtId ?? undefined,
-    neighborhoodId: profile?.neighborhoodId ?? undefined,
+    neighborhoodId: announcementNeighborhoodId,
   });
 
   const { data: communityPosts = [], isLoading: communityLoading, refetch: refetchCommunity } = useCommunityPosts({
