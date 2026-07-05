@@ -43,6 +43,7 @@ export default function CommunityPostDetailScreen() {
   const addComment = useAddComment(id ?? '');
   const [newComment, setNewComment] = useState('');
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
+  const [galleryIndex, setGalleryIndex] = useState(0);
 
   if (isLoading) {
     return (
@@ -124,31 +125,50 @@ export default function CommunityPostDetailScreen() {
             </Text>
 
             {post.media.length > 0 && (
-              <FlatList
-                horizontal
-                pagingEnabled
-                showsHorizontalScrollIndicator={false}
-                data={post.media}
-                keyExtractor={(item) => item.id}
-                className="h-56 mb-4"
-                renderItem={({ item }) => (
-                  <Pressable onPress={() => setPreviewIndex(post.media.indexOf(item))}>
-                    <View className="w-screen h-56 rounded-xl overflow-hidden mr-2 bg-gray-100 dark:bg-gray-800">
-                      {item.mediaType === 'Image' ? (
-                        <Image
-                          source={{ uri: toAbsoluteUrl(item.url)! }}
-                          className="w-full h-full"
-                          resizeMode="cover"
-                        />
-                      ) : (
-                        <View className="flex-1 items-center justify-center">
-                          <Ionicons name="videocam-outline" size={48} color="#94a3b8" />
-                        </View>
-                      )}
-                    </View>
-                  </Pressable>
+              <View className="mb-4">
+                <FlatList
+                  horizontal
+                  pagingEnabled
+                  nestedScrollEnabled
+                  showsHorizontalScrollIndicator={false}
+                  data={post.media}
+                  keyExtractor={(item) => item.id}
+                  className="h-56"
+                  onMomentumScrollEnd={(e) => {
+                    const index = Math.round(e.nativeEvent.contentOffset.x / e.nativeEvent.layoutMeasurement.width);
+                    setGalleryIndex(index);
+                  }}
+                  renderItem={({ item }) => (
+                    <Pressable onPress={() => setPreviewIndex(post.media.indexOf(item))}>
+                      <View className="w-screen h-56 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
+                        {item.mediaType === 'Image' ? (
+                          <Image
+                            source={{ uri: toAbsoluteUrl(item.url)! }}
+                            className="w-full h-full"
+                            resizeMode="cover"
+                          />
+                        ) : (
+                          <View className="flex-1 items-center justify-center">
+                            <Ionicons name="videocam-outline" size={48} color="#94a3b8" />
+                          </View>
+                        )}
+                      </View>
+                    </Pressable>
+                  )}
+                />
+                {post.media.length > 1 && (
+                  <View className="flex-row items-center justify-center gap-1.5 mt-2">
+                    {post.media.map((_, i) => (
+                      <View
+                        key={i}
+                        className={`w-2 h-2 rounded-full ${
+                          i === galleryIndex ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
+                        }`}
+                      />
+                    ))}
+                  </View>
                 )}
-              />
+              </View>
             )}
 
             <Modal
@@ -158,17 +178,42 @@ export default function CommunityPostDetailScreen() {
               statusBarTranslucent
               onRequestClose={() => setPreviewIndex(null)}
             >
-              <View className="flex-1 bg-black/90 justify-center">
-                <Pressable className="flex-1 justify-center" onPress={() => setPreviewIndex(null)}>
-                  {previewIndex !== null && post.media[previewIndex] && (
-                    <Image
-                      source={{ uri: toAbsoluteUrl(post.media[previewIndex].url)! }}
-                      className="w-full"
-                      style={{ height: Dimensions.get('window').height * 0.65 }}
-                      resizeMode="contain"
-                    />
+              <View className="flex-1 bg-black/90">
+                <View className="flex-1 flex-row items-center">
+                  {previewIndex !== null && previewIndex > 0 && (
+                    <Pressable
+                      className="h-full justify-center px-4 active:opacity-50"
+                      onPress={() => setPreviewIndex(previewIndex! - 1)}
+                    >
+                      <View className="w-10 h-10 rounded-full bg-white/15 items-center justify-center">
+                        <Ionicons name="chevron-back" size={22} color="white" />
+                      </View>
+                    </Pressable>
                   )}
-                </Pressable>
+                  <Pressable
+                    className="flex-1 justify-center items-center"
+                    onPress={() => setPreviewIndex(null)}
+                  >
+                    {previewIndex !== null && post.media[previewIndex] && (
+                      <Image
+                        source={{ uri: toAbsoluteUrl(post.media[previewIndex].url)! }}
+                        className="w-full"
+                        style={{ height: Dimensions.get('window').height * 0.65 }}
+                        resizeMode="contain"
+                      />
+                    )}
+                  </Pressable>
+                  {previewIndex !== null && previewIndex < post.media.length - 1 && (
+                    <Pressable
+                      className="h-full justify-center px-4 active:opacity-50"
+                      onPress={() => setPreviewIndex(previewIndex! + 1)}
+                    >
+                      <View className="w-10 h-10 rounded-full bg-white/15 items-center justify-center">
+                        <Ionicons name="chevron-forward" size={22} color="white" />
+                      </View>
+                    </Pressable>
+                  )}
+                </View>
                 <View className="flex-row items-center justify-between px-5 pb-8 pt-4">
                   <Text className="text-sm text-white/60">
                     {previewIndex !== null ? previewIndex + 1 : 0} / {post.media.length}
