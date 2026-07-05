@@ -65,7 +65,7 @@ export function SelectPicker({
   return (
     <>
       <View className="mb-4">
-        <Text className="text-sm font-medium text-slate-700 mb-1.5">{label}</Text>
+        <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{label}</Text>
         <TouchableOpacity
           onPress={handleOpen}
           activeOpacity={0.7}
