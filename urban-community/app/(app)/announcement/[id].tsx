@@ -72,13 +72,19 @@ export default function AnnouncementDetailScreen() {
         </View>
 
         {/* Location */}
-        {announcement.neighborhoodName && (
-          <View className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border border-blue-200 dark:border-blue-800">
-            <Text className="text-sm font-medium text-blue-900 dark:text-blue-300">
-              📍 {announcement.neighborhoodName}
-            </Text>
-          </View>
-        )}
+        <View className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border border-blue-200 dark:border-blue-800">
+          <Text className="text-sm font-medium text-blue-900 dark:text-blue-300">
+            {announcement.scope === 'All'
+              ? '🌐 Tüm Bölgeler'
+              : `📍 ${[
+                  announcement.provinceName,
+                  announcement.districtName,
+                  announcement.neighborhoodName,
+                ]
+                  .filter(Boolean)
+                  .join(' / ')}`}
+          </Text>
+        </View>
 
         {/* Expiry Info */}
         {expiresAt && (
