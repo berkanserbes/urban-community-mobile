@@ -1,6 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
-import { ActivityIndicator, FlatList, Image, ScrollView, Text, View } from 'react-native';
+import { useState } from 'react';
+import {
+  ActivityIndicator,
+  Dimensions,
+  FlatList,
+  Image,
+  Modal,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { ScreenContainer } from '@/components/layout/ScreenContainer';
 import { useReportById, type ReportHistoryDto, type ReportPriority } from '@/features/reports';
@@ -45,6 +56,7 @@ function HistoryTimeline({ history }: { history: ReportHistoryDto[] }) {
 export default function ReportDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: report, isLoading, isError, error } = useReportById(id ?? null);
+  const [previewIndex, setPreviewIndex] = useState<number | null>(null);
 
   if (isLoading) {
     return (
@@ -97,24 +109,58 @@ export default function ReportDetailScreen() {
             showsHorizontalScrollIndicator={false}
             data={report.media}
             keyExtractor={(item) => item.id}
-            className="h-64"
+            className="h-56 mb-4"
             renderItem={({ item }) => (
-              <View className="w-screen h-64 bg-gray-100 dark:bg-gray-800">
-                {item.mediaType === 'Image' ? (
-                  <Image
-                    source={{ uri: toAbsoluteUrl(item.url)! }}
-                    className="w-full h-full"
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <View className="flex-1 items-center justify-center">
-                    <Ionicons name="videocam-outline" size={48} color="#94a3b8" />
-                  </View>
-                )}
-              </View>
+              <Pressable onPress={() => setPreviewIndex(report.media.indexOf(item))}>
+                <View className="w-screen h-56 rounded-xl overflow-hidden mr-2 bg-gray-100 dark:bg-gray-800">
+                  {item.mediaType === 'Image' ? (
+                    <Image
+                      source={{ uri: toAbsoluteUrl(item.url)! }}
+                      className="w-full h-full"
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View className="flex-1 items-center justify-center">
+                      <Ionicons name="videocam-outline" size={48} color="#94a3b8" />
+                    </View>
+                  )}
+                </View>
+              </Pressable>
             )}
           />
         )}
+
+        <Modal
+          visible={previewIndex !== null}
+          transparent
+          animationType="fade"
+          statusBarTranslucent
+          onRequestClose={() => setPreviewIndex(null)}
+        >
+          <View className="flex-1 bg-black/90 justify-center">
+            <Pressable className="flex-1 justify-center" onPress={() => setPreviewIndex(null)}>
+              {previewIndex !== null && report.media[previewIndex] && (
+                <Image
+                  source={{ uri: toAbsoluteUrl(report.media[previewIndex].url)! }}
+                  className="w-full"
+                  style={{ height: Dimensions.get('window').height * 0.65 }}
+                  resizeMode="contain"
+                />
+              )}
+            </Pressable>
+            <View className="flex-row items-center justify-between px-5 pb-8 pt-4">
+              <Text className="text-sm text-white/60">
+                {previewIndex !== null ? previewIndex + 1 : 0} / {report.media.length}
+              </Text>
+              <Pressable
+                className="w-10 h-10 rounded-full bg-white/15 items-center justify-center active:bg-white/30"
+                onPress={() => setPreviewIndex(null)}
+              >
+                <Ionicons name="close" size={22} color="white" />
+              </Pressable>
+            </View>
+          </View>
+        </Modal>
 
         <View className="px-4 pt-5">
           <View className="flex-row items-start justify-between gap-2 mb-3">
