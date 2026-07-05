@@ -180,16 +180,14 @@ export default function CommunityPostDetailScreen() {
             >
               <View className="flex-1 bg-black/90">
                 <View className="flex-1 flex-row items-center">
-                  {previewIndex !== null && previewIndex > 0 && (
-                    <Pressable
-                      className="h-full justify-center px-4 active:opacity-50"
-                      onPress={() => setPreviewIndex(previewIndex! - 1)}
-                    >
-                      <View className="w-10 h-10 rounded-full bg-white/15 items-center justify-center">
-                        <Ionicons name="chevron-back" size={22} color="white" />
-                      </View>
-                    </Pressable>
-                  )}
+                  <Pressable
+                    className={`h-full justify-center px-4 ${previewIndex !== null && previewIndex > 0 ? 'active:opacity-50' : ''}`}
+                    onPress={() => previewIndex !== null && previewIndex > 0 && setPreviewIndex(previewIndex - 1)}
+                  >
+                    <View className={`w-10 h-10 rounded-full items-center justify-center ${previewIndex !== null && previewIndex > 0 ? 'bg-white/15' : 'bg-white/5'}`}>
+                      <Ionicons name="chevron-back" size={22} color={previewIndex !== null && previewIndex > 0 ? 'white' : '#ffffff40'} />
+                    </View>
+                  </Pressable>
                   <Pressable
                     className="flex-1 justify-center items-center"
                     onPress={() => setPreviewIndex(null)}
@@ -203,16 +201,14 @@ export default function CommunityPostDetailScreen() {
                       />
                     )}
                   </Pressable>
-                  {previewIndex !== null && previewIndex < post.media.length - 1 && (
-                    <Pressable
-                      className="h-full justify-center px-4 active:opacity-50"
-                      onPress={() => setPreviewIndex(previewIndex! + 1)}
-                    >
-                      <View className="w-10 h-10 rounded-full bg-white/15 items-center justify-center">
-                        <Ionicons name="chevron-forward" size={22} color="white" />
-                      </View>
-                    </Pressable>
-                  )}
+                  <Pressable
+                    className={`h-full justify-center px-4 ${previewIndex !== null && previewIndex < post.media.length - 1 ? 'active:opacity-50' : ''}`}
+                    onPress={() => previewIndex !== null && previewIndex < post.media.length - 1 && setPreviewIndex(previewIndex + 1)}
+                  >
+                    <View className={`w-10 h-10 rounded-full items-center justify-center ${previewIndex !== null && previewIndex < post.media.length - 1 ? 'bg-white/15' : 'bg-white/5'}`}>
+                      <Ionicons name="chevron-forward" size={22} color={previewIndex !== null && previewIndex < post.media.length - 1 ? 'white' : '#ffffff40'} />
+                    </View>
+                  </Pressable>
                 </View>
                 <View className="flex-row items-center justify-between px-5 pb-8 pt-4">
                   <Text className="text-sm text-white/60">
