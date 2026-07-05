@@ -56,6 +56,7 @@ export default function ReportsScreen() {
   }, [showMine, refetchMine, refetchAll]);
 
   const scopeText = scope === 'Neighborhood' ? 'Mahallede' : scope === 'District' ? 'İlçede' : 'İlde';
+  const activeFilterLabel = activeFilter ? STATUS_FILTERS.find((f) => f.value === activeFilter)?.label : null;
 
   const tabs = [
     { key: 'Neighborhood', label: 'Mahallem' },
@@ -137,7 +138,7 @@ export default function ReportsScreen() {
           <View className="flex-1 items-center justify-center px-4">
             <Ionicons name="document-text-outline" size={48} color="#cbd5e1" />
             <Text className="text-base text-gray-400 mt-3 text-center">
-              {showMine ? 'Henüz rapor oluşturmadın' : `${scopeText} henüz rapor yok`}
+              {showMine ? 'Henüz rapor oluşturmadın' : activeFilterLabel ? `${activeFilterLabel} durumunda rapor bulunamadı` : `${scopeText} henüz rapor yok`}
             </Text>
             <TouchableOpacity
               onPress={() => router.push('/(app)/report/create' as any)}
