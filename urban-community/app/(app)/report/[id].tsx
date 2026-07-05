@@ -25,6 +25,15 @@ const PRIORITY_LABELS: Record<ReportPriority, string> = {
   Urgent: 'Acil',
 };
 
+const STATUS_LABELS: Record<string, string> = {
+  PendingReview: 'Bekliyor',
+  AiReview: 'AI İncelemede',
+  Confirmed: 'Onaylandı',
+  InProgress: 'İşlemde',
+  Resolved: 'Çözüldü',
+  Rejected: 'Reddedildi',
+};
+
 function HistoryTimeline({ history }: { history: ReportHistoryDto[] }) {
   return (
     <View className="gap-4">
@@ -40,6 +49,13 @@ function HistoryTimeline({ history }: { history: ReportHistoryDto[] }) {
             <Text className="text-sm font-medium text-gray-900 dark:text-white">
               {item.changedByUserFullName ?? 'Sistem'}
             </Text>
+            {item.fromStatus && item.toStatus && (
+              <Text className="text-sm text-gray-700 dark:text-gray-300 mt-0.5">
+                {STATUS_LABELS[item.fromStatus] ?? item.fromStatus}{' '}
+                <Ionicons name="arrow-forward" size={12} color="#64748b" />{' '}
+                {STATUS_LABELS[item.toStatus] ?? item.toStatus}
+              </Text>
+            )}
             <Text className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
               {new Date(item.changedAt).toLocaleString('tr-TR')}
             </Text>
