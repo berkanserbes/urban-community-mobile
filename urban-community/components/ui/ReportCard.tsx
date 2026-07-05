@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Pressable, Text, View } from 'react-native';
+import { Image, Pressable, Text, View } from 'react-native';
 import type { ReportListItem } from '@/features/reports';
 import { StatusBadge } from './StatusBadge';
 
@@ -15,8 +15,12 @@ export function ReportCard({ report, onPress }: ReportCardProps) {
       className="bg-white dark:bg-gray-800 rounded-xl p-4 mb-3 border border-gray-200 dark:border-gray-700 active:opacity-70"
     >
       <View className="flex-row items-start gap-3">
-        <View className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-700 items-center justify-center flex-shrink-0">
-          <Ionicons name="document-text-outline" size={22} color="#64748b" />
+        <View className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-700 items-center justify-center flex-shrink-0 overflow-hidden">
+          {report.thumbnailUrl ? (
+            <Image source={{ uri: report.thumbnailUrl }} className="w-full h-full" resizeMode="cover" />
+          ) : (
+            <Ionicons name="document-text-outline" size={22} color="#64748b" />
+          )}
         </View>
         <View className="flex-1 min-w-0">
           <View className="flex-row items-start justify-between gap-2">

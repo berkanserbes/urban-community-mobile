@@ -37,6 +37,7 @@ export interface ReportListItem {
   assignmentNeedsReview: boolean;
   createdAt: string;
   resolvedAt: string | null;
+  thumbnailUrl?: string;
 }
 
 export interface ReportMediaDto {
