@@ -109,7 +109,7 @@ export default function NotificationsScreen() {
   };
 
   return (
-    <ScreenContainer scrollable={false}>
+    <ScreenContainer scrollable={false} safeAreaEdges={['bottom']}>
       <View className="flex-1">
         <View className="flex-row items-center justify-between px-4 pt-4 pb-2">
           <View className="flex-row items-center gap-2">
