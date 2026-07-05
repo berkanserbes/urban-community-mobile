@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, RefreshControl, Text, TouchableOpacity, View } from 'react-native';
 import { ReportCard } from '@/components/ui/ReportCard';
 import { ScreenContainer } from '@/components/layout/ScreenContainer';
 import { useMyReports, useReports, type ReportStatus } from '@/features/reports';
@@ -13,12 +13,6 @@ const STATUS_FILTERS: { label: string; value: ReportStatus | null }[] = [
   { label: 'Onaylandı', value: 'Confirmed' },
   { label: 'İşlemde', value: 'InProgress' },
   { label: 'Çözüldü', value: 'Resolved' },
-];
-
-const SCOPE_OPTIONS: { label: string; value: string }[] = [
-  { label: 'Mahalle', value: 'Neighborhood' },
-  { label: 'İlçe', value: 'District' },
-  { label: 'İl', value: 'Province' },
 ];
 
 export default function ReportsScreen() {
@@ -61,6 +55,15 @@ export default function ReportsScreen() {
     setRefreshing(false);
   }, [showMine, refetchMine, refetchAll]);
 
+  const scopeText = scope === 'Neighborhood' ? 'Mahallede' : scope === 'District' ? 'İlçede' : 'İlde';
+
+  const tabs = [
+    { key: 'Neighborhood', label: 'Mahallem' },
+    { key: 'District', label: 'İlçe' },
+    { key: 'Province', label: 'İl' },
+    { key: 'My', label: 'Benim' },
+  ] as const;
+
   return (
     <ScreenContainer scrollable={false}>
       <View className="flex-1">
@@ -68,46 +71,36 @@ export default function ReportsScreen() {
           <Text className="text-2xl font-bold text-gray-900 dark:text-white">Raporlar</Text>
         </View>
 
-        <View className="flex-row px-4 pb-3 gap-2">
-          <Pressable
-            onPress={() => setShowMine(false)}
-            className={`px-4 py-2 rounded-full ${!showMine ? 'bg-blue-600' : 'bg-gray-100 dark:bg-gray-800'}`}
-          >
-            <Text className={`text-sm font-medium ${!showMine ? 'text-white' : 'text-gray-600 dark:text-gray-400'}`}>
-              Mahalle
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => setShowMine(true)}
-            className={`px-4 py-2 rounded-full ${showMine ? 'bg-blue-600' : 'bg-gray-100 dark:bg-gray-800'}`}
-          >
-            <Text className={`text-sm font-medium ${showMine ? 'text-white' : 'text-gray-600 dark:text-gray-400'}`}>
-              Benim
-            </Text>
-          </Pressable>
+        <View className="px-4 pb-3">
+          <View className="flex-row bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
+            {tabs.map((tab) => {
+              const active = tab.key === 'My' ? showMine : !showMine && scope === tab.key;
+              return (
+                <TouchableOpacity
+                  key={tab.key}
+                  className="flex-1"
+                  onPress={() => {
+                    if (tab.key === 'My') {
+                      setShowMine(true);
+                    } else {
+                      setShowMine(false);
+                      setScope(tab.key);
+                    }
+                  }}
+                  activeOpacity={1}
+                >
+                  <View className={`py-2 rounded-lg items-center justify-center ${active ? 'bg-white dark:bg-gray-700' : ''}`}>
+                    <Text className={`text-xs font-medium ${active ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                      {tab.label}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </View>
 
         {!showMine && (
-          <>
-          <View className="flex-row px-4 pb-2 gap-2">
-            {SCOPE_OPTIONS.map((opt) => (
-              <Pressable
-                key={opt.value}
-                onPress={() => setScope(opt.value)}
-                className={`px-3 py-1.5 rounded-full ${
-                  scope === opt.value ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-gray-100 dark:bg-gray-800'
-                }`}
-              >
-                <Text
-                  className={`text-xs font-medium ${
-                    scope === opt.value ? 'text-blue-700 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'
-                  }`}
-                >
-                  {opt.label}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
           <View className="px-4 pb-2">
             <FlatList
               horizontal
@@ -115,26 +108,18 @@ export default function ReportsScreen() {
               data={STATUS_FILTERS}
               keyExtractor={(item) => item.label}
               renderItem={({ item }) => (
-                <Pressable
+                <TouchableOpacity
                   onPress={() => setActiveFilter(item.value)}
-                  className={`px-3 py-1.5 rounded-full mr-2 ${
-                    activeFilter === item.value ? 'bg-gray-200 dark:bg-gray-700' : 'bg-gray-50 dark:bg-gray-800/50'
-                  }`}
+                  activeOpacity={0.7}
+                  className={`px-3 py-1.5 rounded-full mr-2 ${activeFilter === item.value ? 'bg-gray-200 dark:bg-gray-700' : 'bg-gray-50 dark:bg-gray-800/50'}`}
                 >
-                  <Text
-                    className={`text-xs ${
-                      activeFilter === item.value
-                        ? 'text-gray-900 dark:text-white font-medium'
-                        : 'text-gray-500 dark:text-gray-400'
-                    }`}
-                  >
+                  <Text className={`text-xs ${activeFilter === item.value ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
                     {item.label}
                   </Text>
-                </Pressable>
+                </TouchableOpacity>
               )}
             />
           </View>
-          </>
         )}
 
         {isLoading && reports.length === 0 ? (
@@ -152,14 +137,15 @@ export default function ReportsScreen() {
           <View className="flex-1 items-center justify-center px-4">
             <Ionicons name="document-text-outline" size={48} color="#cbd5e1" />
             <Text className="text-base text-gray-400 mt-3 text-center">
-              {showMine ? 'Henüz rapor oluşturmadın' : `${{ Neighborhood: 'Mahallede', District: 'İlçede', Province: 'İlde' }[scope] ?? 'Bölgede'} henüz rapor yok`}
+              {showMine ? 'Henüz rapor oluşturmadın' : `${scopeText} henüz rapor yok`}
             </Text>
-            <Pressable
+            <TouchableOpacity
               onPress={() => router.push('/(app)/report/create' as any)}
-              className="bg-blue-600 rounded-xl px-6 py-3 mt-4 active:opacity-80"
+              activeOpacity={0.8}
+              className="bg-blue-600 rounded-xl px-6 py-3 mt-4"
             >
               <Text className="text-white font-semibold">İlk Raporu Oluştur</Text>
-            </Pressable>
+            </TouchableOpacity>
           </View>
         ) : (
           <FlatList
@@ -178,12 +164,14 @@ export default function ReportsScreen() {
           />
         )}
 
-        <Pressable
+        <TouchableOpacity
           onPress={() => router.push('/(app)/report/create' as any)}
-          className="absolute -bottom-2 right-0 w-14 h-14 rounded-full bg-blue-600 items-center justify-center active:opacity-80 shadow-lg"
+          activeOpacity={0.8}
+          style={{ position: 'absolute', bottom: -8, right: 0 }}
+          className="w-14 h-14 rounded-full bg-blue-600 items-center justify-center shadow-lg"
         >
           <Ionicons name="add" size={28} color="white" />
-        </Pressable>
+        </TouchableOpacity>
       </View>
     </ScreenContainer>
   );
