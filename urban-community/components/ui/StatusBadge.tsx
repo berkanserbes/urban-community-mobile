@@ -96,7 +96,7 @@ export function StatusBadge({ status, size = 'sm' }: StatusBadgeProps) {
 
   return (
     <View
-      className={`flex-row items-center gap-1.5 rounded-full ${config.bg} ${
+      className={`flex-row items-center gap-1.5 self-start rounded-full ${config.bg} ${
         size === 'sm' ? 'px-2.5 py-0.5' : 'px-3 py-1'
       }`}
     >
