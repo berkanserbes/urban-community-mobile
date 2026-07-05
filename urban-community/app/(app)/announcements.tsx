@@ -34,7 +34,7 @@ export default function AnnouncementsScreen() {
 
   if (profileLoading || announcementsLoading) {
     return (
-      <ScreenContainer>
+      <ScreenContainer safeAreaEdges={['bottom']}>
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#2563EB" />
         </View>
@@ -43,13 +43,15 @@ export default function AnnouncementsScreen() {
   }
 
   return (
-    <ScreenContainer scrollable={false}>
+    <ScreenContainer scrollable={false} safeAreaEdges={['bottom']}>
       <FlatList
         data={announcements}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 12 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24 }}
         ListHeaderComponent={
-          <Text className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Duyurular</Text>
+          <View className="pt-3 pb-2">
+            <Text className="text-2xl font-bold text-gray-900 dark:text-white">Duyurular</Text>
+          </View>
         }
         ListEmptyComponent={
           <View className="items-center justify-center py-12">
