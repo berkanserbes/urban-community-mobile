@@ -62,13 +62,8 @@ export default function CreateSuggestionScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={{ flex: 1 }}
     >
-      <ScreenContainer>
-        <ScrollView
-          className="flex-1"
-          contentContainerStyle={{ paddingBottom: 40 }}
-          keyboardShouldPersistTaps="handled"
-        >
-          <View className="gap-6">
+      <ScreenContainer safeAreaEdges={['bottom']} contentContainerStyle={{ paddingBottom: 40 }}>
+        <View className="gap-6 pt-3">
             <View className="gap-2">
               <Text className="text-2xl font-bold text-gray-900 dark:text-white">
                 {isEdit ? 'Öneriyi Düzenle' : 'Yeni Öneri'}
@@ -136,7 +131,6 @@ export default function CreateSuggestionScreen() {
               isLoading={createSuggestion.isPending || updateSuggestion.isPending}
             />
           </View>
-        </ScrollView>
       </ScreenContainer>
     </KeyboardAvoidingView>
   );

@@ -210,13 +210,8 @@ export default function CreateReportScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={{ flex: 1 }}
     >
-      <ScreenContainer>
-        <ScrollView
-          className="flex-1"
-          contentContainerStyle={{ paddingBottom: 40 }}
-          keyboardShouldPersistTaps="handled"
-        >
-          <View className="gap-6">
+      <ScreenContainer safeAreaEdges={['bottom']} contentContainerStyle={{ paddingBottom: 40 }}>
+        <View className="gap-6 pt-3">
             <View className="gap-2">
               <Text className="text-2xl font-bold text-gray-900 dark:text-white">Yeni Rapor</Text>
               <Text className="text-sm text-gray-500 dark:text-gray-400">
@@ -363,7 +358,6 @@ export default function CreateReportScreen() {
               isLoading={createReport.isPending}
             />
           </View>
-        </ScrollView>
       </ScreenContainer>
     </KeyboardAvoidingView>
   );
