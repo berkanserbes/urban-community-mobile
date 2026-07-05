@@ -51,11 +51,17 @@ export function AnnouncementCard({ announcement, onPress }: AnnouncementCardProp
         </Text>
       </View>
 
-      {announcement.neighborhoodName && (
-        <Text className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-          📍 {announcement.neighborhoodName}
-        </Text>
-      )}
+      <Text className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+        {announcement.scope === 'All'
+          ? '🌐 Tüm Bölgeler'
+          : `📍 ${[
+              announcement.provinceName,
+              announcement.districtName,
+              announcement.neighborhoodName,
+            ]
+              .filter(Boolean)
+              .join(' / ')}`}
+      </Text>
     </Pressable>
   );
 }
