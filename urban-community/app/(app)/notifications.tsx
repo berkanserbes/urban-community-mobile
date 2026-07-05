@@ -21,6 +21,7 @@ import {
 } from '@/features/notifications';
 import { useQueryClient } from '@tanstack/react-query';
 import type { NotificationDto } from '@/features/notifications';
+import { getApiErrorMessage } from '@/lib/utils/error';
 
 function handleNotificationPress(notification: NotificationDto) {
   if (!notification.relatedEntityId) return;
@@ -51,8 +52,12 @@ function handleDeleteNotification(item: NotificationDto, queryClient: ReturnType
         text: 'Sil',
         style: 'destructive',
         onPress: async () => {
-          await notificationsApi.deleteNotification(item.id);
-          queryClient.invalidateQueries({ queryKey: notificationKeys.all });
+          try {
+            await notificationsApi.deleteNotification(item.id);
+            queryClient.invalidateQueries({ queryKey: notificationKeys.all });
+          } catch (error) {
+            Alert.alert('Bildirim silinemedi', getApiErrorMessage(error));
+          }
         },
       },
     ],
@@ -61,7 +66,7 @@ function handleDeleteNotification(item: NotificationDto, queryClient: ReturnType
 
 export default function NotificationsScreen() {
   const [refreshing, setRefreshing] = useState(false);
-  const { data: notifications = [], isLoading, refetch } = useNotifications();
+  const { data: notifications = [], isLoading, isError, error, refetch } = useNotifications();
   const { markAsRead, markAllAsRead: markAll } = useMarkAsRead();
   const { data: unreadData } = useUnreadCount();
   const queryClient = useQueryClient();
@@ -92,8 +97,12 @@ export default function NotificationsScreen() {
         text: 'Sil',
         style: 'destructive',
         onPress: async () => {
-          await notificationsApi.deleteAll();
-          queryClient.invalidateQueries({ queryKey: notificationKeys.all });
+          try {
+            await notificationsApi.deleteAll();
+            queryClient.invalidateQueries({ queryKey: notificationKeys.all });
+          } catch (error) {
+            Alert.alert('Bildirimler silinemedi', getApiErrorMessage(error));
+          }
         },
       },
     ]);
@@ -138,6 +147,13 @@ export default function NotificationsScreen() {
         {isLoading && notifications.length === 0 ? (
           <View className="flex-1 items-center justify-center">
             <ActivityIndicator size="large" color="#2563EB" />
+          </View>
+        ) : isError ? (
+          <View className="flex-1 items-center justify-center px-4">
+            <Ionicons name="warning-outline" size={40} color="#ef4444" />
+            <Text className="text-base text-red-500 text-center mt-3">
+              {getApiErrorMessage(error, 'Bildirimler yuklenemedi.')}
+            </Text>
           </View>
         ) : notifications.length === 0 ? (
           <View className="flex-1 items-center justify-center px-4">

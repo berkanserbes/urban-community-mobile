@@ -2,9 +2,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Alert, ActivityIndicator, Image, Pressable, Text, View } from 'react-native';
 import { ScreenContainer } from '@/components/layout/ScreenContainer';
-import { useAuthStore } from '@/features/auth';
+import { authApi, useAuthStore } from '@/features/auth';
 import { useProfile } from '@/features/user';
 import { useUnreadCount } from '@/features/notifications';
+import { queryClient } from '@/lib/api/query-client';
 import { toAbsoluteUrl } from '@/lib/utils/url';
 
 const ROLE_LABELS: Record<string, string> = {
@@ -56,6 +57,7 @@ function Divider() {
 
 export default function ProfileScreen() {
   const authUser = useAuthStore((s) => s.user);
+  const refreshToken = useAuthStore((s) => s.refreshToken);
   const logout = useAuthStore((s) => s.logout);
   const { data: profile, isLoading } = useProfile();
   const { data: unreadData } = useUnreadCount();
@@ -69,6 +71,16 @@ export default function ProfileScreen() {
   const roleKey = displayUser?.role ?? 'Citizen';
   const roleColor = ROLE_COLORS[roleKey] ?? { bg: 'bg-gray-100', text: 'text-gray-700' };
 
+  async function performLogout() {
+    if (refreshToken) {
+      await authApi.logout(refreshToken).catch(() => {});
+    }
+
+    logout();
+    queryClient.clear();
+    router.replace('/(auth)/login');
+  }
+
   function handleLogout() {
     Alert.alert('Çıkış Yap', 'Hesabından çıkmak istediğine emin misin?', [
       { text: 'İptal', style: 'cancel' },
@@ -76,8 +88,7 @@ export default function ProfileScreen() {
         text: 'Çıkış Yap',
         style: 'destructive',
         onPress: () => {
-          logout();
-          router.replace('/(auth)/login');
+          void performLogout();
         },
       },
     ]);

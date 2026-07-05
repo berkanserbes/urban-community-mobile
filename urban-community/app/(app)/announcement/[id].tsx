@@ -2,6 +2,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { ScreenContainer } from '@/components/layout/ScreenContainer';
 import { useAnnouncementById } from '@/features/announcements';
+import { getApiErrorMessage } from '@/lib/utils/error';
 
 export default function AnnouncementDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -21,7 +22,9 @@ export default function AnnouncementDetailScreen() {
     return (
       <ScreenContainer>
         <View className="flex-1 items-center justify-center">
-          <Text className="text-red-500">Duyuru yüklenemedi</Text>
+          <Text className="text-red-500 text-center px-4">
+            {getApiErrorMessage(error, 'Duyuru yuklenemedi.')}
+          </Text>
         </View>
       </ScreenContainer>
     );

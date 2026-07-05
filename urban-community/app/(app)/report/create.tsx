@@ -13,6 +13,7 @@ import { SelectPicker, type SelectOption } from '@/components/ui/SelectPicker';
 import { ScreenContainer } from '@/components/layout/ScreenContainer';
 import { useAuthStore } from '@/features/auth';
 import { useCategories, useCreateReport } from '@/features/reports';
+import { useProfile } from '@/features/user';
 
 interface SelectedMedia {
   uri: string;
@@ -27,8 +28,23 @@ const createReportSchema = z.object({
 
 type CreateReportForm = z.infer<typeof createReportSchema>;
 
+function isValidReportLocation(
+  coords: { latitude: number; longitude: number } | null,
+): coords is { latitude: number; longitude: number } {
+  return (
+    coords !== null &&
+    Number.isFinite(coords.latitude) &&
+    Number.isFinite(coords.longitude) &&
+    coords.latitude >= -90 &&
+    coords.latitude <= 90 &&
+    coords.longitude >= -180 &&
+    coords.longitude <= 180
+  );
+}
+
 export default function CreateReportScreen() {
   const user = useAuthStore((s) => s.user);
+  const { data: profile } = useProfile();
   const { data: categories = [] } = useCategories();
   const createReport = useCreateReport();
   const [selectedCategory, setSelectedCategory] = useState<SelectOption | null>(null);
@@ -42,16 +58,58 @@ export default function CreateReportScreen() {
   });
   const mapRef = useRef<MapView>(null);
 
-  useEffect(() => {
-    (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') return;
-      const pos = await Location.getCurrentPositionAsync({});
-      const { latitude, longitude } = pos.coords;
+  const applySelectedLocation = useCallback(
+    (coords: { latitude: number; longitude: number }, animate = false) => {
+      if (!isValidReportLocation(coords)) {
+        return false;
+      }
+
+      const { latitude, longitude } = coords;
       setLocation({ latitude, longitude });
       setRegion((prev) => ({ ...prev, latitude, longitude }));
-    })();
-  }, []);
+
+      if (animate) {
+        mapRef.current?.animateToRegion(
+          { latitude, longitude, latitudeDelta: 0.01, longitudeDelta: 0.01 },
+          500,
+        );
+      }
+
+      return true;
+    },
+    [],
+  );
+
+  const requestCurrentLocation = useCallback(
+    async (showError = false) => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        if (showError) {
+          Alert.alert('Konum İzni Gerekli', 'Mevcut konumu kullanmak için konum izni vermelisiniz.');
+        }
+        return;
+      }
+
+      try {
+        const pos = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+        const applied = applySelectedLocation(pos.coords, showError);
+        if (!applied && showError) {
+          Alert.alert('Konum Gecersiz', 'Haritadan konumu elle secebilir veya tekrar deneyebilirsiniz.');
+        }
+      } catch {
+        if (showError) {
+          Alert.alert('Konum Alınamadı', 'Haritadan konumu elle seçebilir veya tekrar deneyebilirsiniz.');
+        }
+      }
+    },
+    [applySelectedLocation],
+  );
+
+  useEffect(() => {
+    requestCurrentLocation();
+  }, [requestCurrentLocation]);
 
   const {
     control,
@@ -123,17 +181,28 @@ export default function CreateReportScreen() {
 
   const onSubmit = useCallback(
     (data: CreateReportForm) => {
-      if (!user?.neighborhoodId) return;
+      const neighborhoodId = profile?.neighborhoodId ?? user?.neighborhoodId;
+      if (!neighborhoodId) {
+        Alert.alert('Konum Eksik', 'Rapor oluşturmak için profilinizde mahalle bilgisi seçili olmalı.');
+        return;
+      }
+
+      if (!isValidReportLocation(location)) {
+        Alert.alert('Konum Eksik', 'Rapor konumunu haritadan seçin veya mevcut konum butonunu kullanın.');
+        return;
+      }
 
       createReport.mutate({
         title: data.title,
         description: data.description,
-        neighborhoodId: user.neighborhoodId,
+        neighborhoodId,
         suggestedCategoryId: selectedCategory?.id ?? undefined,
+        latitude: location?.latitude,
+        longitude: location?.longitude,
         media: media.length > 0 ? media : undefined,
       });
     },
-    [user, selectedCategory, createReport, media, location],
+    [profile?.neighborhoodId, user?.neighborhoodId, selectedCategory, createReport, media, location],
   );
 
   return (
@@ -220,7 +289,7 @@ export default function CreateReportScreen() {
                   region={region}
                   onPress={(e) => {
                     const { latitude, longitude } = e.nativeEvent.coordinate;
-                    setLocation({ latitude, longitude });
+                    applySelectedLocation({ latitude, longitude });
                   }}
                 >
                   {location && (
@@ -229,24 +298,13 @@ export default function CreateReportScreen() {
                       coordinate={location}
                       onDragEnd={(e) => {
                         const { latitude, longitude } = e.nativeEvent.coordinate;
-                        setLocation({ latitude, longitude });
+                        applySelectedLocation({ latitude, longitude });
                       }}
                     />
                   )}
                 </MapView>
                 <Pressable
-                  onPress={async () => {
-                    const { status } = await Location.requestForegroundPermissionsAsync();
-                    if (status !== 'granted') return;
-                    const pos = await Location.getCurrentPositionAsync({});
-                    const { latitude, longitude } = pos.coords;
-                    setLocation({ latitude, longitude });
-                    setRegion((prev) => ({ ...prev, latitude, longitude }));
-                    mapRef.current?.animateToRegion(
-                      { latitude, longitude, latitudeDelta: 0.01, longitudeDelta: 0.01 },
-                      500,
-                    );
-                  }}
+                  onPress={() => requestCurrentLocation(true)}
                   className="absolute top-2 right-2 w-9 h-9 rounded-full bg-white dark:bg-gray-800 items-center justify-center shadow-sm"
                 >
                   <Ionicons name="locate" size={20} color="#2563EB" />

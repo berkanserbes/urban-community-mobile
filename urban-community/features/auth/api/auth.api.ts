@@ -1,4 +1,5 @@
 import { apiClient } from '@/lib/api/axios';
+import { unwrapApiData } from '@/lib/api/result';
 import type { ApiResponse } from '@/types/api.types';
 import type { LoginFormValues, RegisterFormValues } from '../types/auth.types';
 
@@ -22,6 +23,20 @@ export interface LoginResponseDto {
   lastName: string;
   role: 'Citizen' | 'Official' | 'Admin';
   neighborhoodId: string | null;
+  mustChangePassword: boolean;
+}
+
+export interface RefreshTokenResponseDto {
+  accessToken: string;
+  accessTokenExpiresAt: string;
+  refreshToken: string;
+  refreshTokenExpiresAt: string;
+  userId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: 'Citizen' | 'Official' | 'Admin';
+  mustChangePassword: boolean;
 }
 
 export interface RegisterResponseDto {
@@ -35,7 +50,7 @@ export const authApi = {
   login: (data: LoginFormValues) =>
     apiClient
       .post<ApiResponse<LoginResponseDto>>('/api/auth/login', data)
-      .then((res) => res.data.data),
+      .then((res) => unwrapApiData(res.data)),
 
   register: (data: RegisterFormValues) =>
     apiClient
@@ -46,12 +61,20 @@ export const authApi = {
         password: data.password,
         confirmPassword: data.confirmPassword,
       })
-      .then((res) => res.data.data),
+      .then((res) => unwrapApiData(res.data)),
 
-  logout: () => apiClient.post('/api/auth/logout'),
+  refreshToken: (data: { accessToken: string; refreshToken: string }) =>
+    apiClient
+      .post<ApiResponse<RefreshTokenResponseDto>>('/api/auth/refresh-token', data)
+      .then((res) => unwrapApiData(res.data)),
+
+  logout: (refreshToken: string) =>
+    apiClient
+      .post<ApiResponse<unknown>>('/api/auth/logout', { refreshToken })
+      .then((res) => unwrapApiData(res.data)),
 
   me: () =>
     apiClient
-      .get<ApiResponse<UserDto>>('/api/auth/me')
-      .then((res) => res.data.data),
+      .get<ApiResponse<UserDto>>('/api/users/me')
+      .then((res) => unwrapApiData(res.data)),
 };

@@ -12,10 +12,9 @@ export const reportKeys = {
 };
 
 export function useReports(params: {
-  neighborhoodId?: string;
+  scope?: string;
   status?: ReportStatus;
   categoryId?: string;
-  userId?: string;
 }) {
   return useQuery({
     queryKey: reportKeys.list(params as Record<string, string | undefined>),

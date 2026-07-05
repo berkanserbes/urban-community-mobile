@@ -14,6 +14,7 @@ import { useCommunityPosts } from '@/features/community';
 import { useProfile } from '@/features/user';
 import { useUnreadCount } from '@/features/notifications';
 import { toAbsoluteUrl } from '@/lib/utils/url';
+import { getApiErrorMessage } from '@/lib/utils/error';
 import { useCallback, useState } from 'react';
 
 function Avatar({ imageUrl, initials }: { imageUrl: string | null; initials: string }) {
@@ -38,20 +39,35 @@ export default function HomeScreen() {
 
   const { data: profile, isLoading: profileLoading } = useProfile();
 
-  const { data: reports = [], isLoading: reportsLoading, refetch: refetchReports } = useReports({
-    neighborhoodId: user?.neighborhoodId ?? undefined,
+  const {
+    data: reports = [],
+    isLoading: reportsLoading,
+    isError: reportsError,
+    error: reportsErrorData,
+    refetch: refetchReports,
+  } = useReports({
+    scope: 'Neighborhood',
   });
 
-  const announcementNeighborhoodId = profile?.neighborhoodId ?? user?.neighborhoodId ?? undefined;
-  const { data: announcements = [], isLoading: announcementsLoading, refetch: refetchAnnouncements } = useAnnouncements({
+  const {
+    data: announcements = [],
+    isLoading: announcementsLoading,
+    isError: announcementsError,
+    error: announcementsErrorData,
+    refetch: refetchAnnouncements,
+  } = useAnnouncements({
     provinceId: profile?.provinceId ?? undefined,
     districtId: profile?.districtId ?? undefined,
-    neighborhoodId: announcementNeighborhoodId,
+    neighborhoodId: profile?.neighborhoodId ?? user?.neighborhoodId ?? undefined,
   });
 
-  const { data: communityPosts = [], isLoading: communityLoading, refetch: refetchCommunity } = useCommunityPosts({
-    neighborhoodId: user?.neighborhoodId ?? undefined,
-  });
+  const {
+    data: communityPosts = [],
+    isLoading: communityLoading,
+    isError: communityError,
+    error: communityErrorData,
+    refetch: refetchCommunity,
+  } = useCommunityPosts({});
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -119,6 +135,13 @@ export default function HomeScreen() {
               <View className="py-6 items-center">
                 <ActivityIndicator size="small" color="#2563EB" />
               </View>
+            ) : reportsError ? (
+              <View className="items-center py-6 bg-red-50 dark:bg-red-900/20 rounded-lg px-4">
+                <Ionicons name="warning-outline" size={32} color="#ef4444" />
+                <Text className="text-sm text-red-500 mt-2 text-center">
+                  {getApiErrorMessage(reportsErrorData, 'Raporlar yuklenemedi.')}
+                </Text>
+              </View>
             ) : recentReports.length > 0 ? (
               recentReports.map((item) => (
                 <ReportCard
@@ -144,6 +167,13 @@ export default function HomeScreen() {
               <View className="py-6 items-center">
                 <ActivityIndicator size="small" color="#2563EB" />
               </View>
+            ) : announcementsError ? (
+              <View className="items-center py-6 bg-red-50 dark:bg-red-900/20 rounded-lg px-4">
+                <Ionicons name="warning-outline" size={32} color="#ef4444" />
+                <Text className="text-sm text-red-500 mt-2 text-center">
+                  {getApiErrorMessage(announcementsErrorData, 'Duyurular yuklenemedi.')}
+                </Text>
+              </View>
             ) : recentAnnouncements.length > 0 ? (
               recentAnnouncements.map((item) => (
                 <AnnouncementCard
@@ -168,6 +198,13 @@ export default function HomeScreen() {
             {communityLoading ? (
               <View className="py-6 items-center">
                 <ActivityIndicator size="small" color="#2563EB" />
+              </View>
+            ) : communityError ? (
+              <View className="items-center py-6 bg-red-50 dark:bg-red-900/20 rounded-lg px-4">
+                <Ionicons name="warning-outline" size={32} color="#ef4444" />
+                <Text className="text-sm text-red-500 mt-2 text-center">
+                  {getApiErrorMessage(communityErrorData, 'Topluluk gonderileri yuklenemedi.')}
+                </Text>
               </View>
             ) : recentPosts.length > 0 ? (
               recentPosts.map((item) => (

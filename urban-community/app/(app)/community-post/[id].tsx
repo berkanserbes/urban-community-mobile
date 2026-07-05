@@ -19,11 +19,14 @@ import {
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { ScreenContainer } from '@/components/layout/ScreenContainer';
 import { useAuthStore } from '@/features/auth';
-import { useCommunityPostById, communityApi, useDeletePost } from '@/features/community';
+import {
+  useCommunityPostById,
+  useDeletePost,
+  usePostComments,
+  useAddComment,
+} from '@/features/community';
 import { toAbsoluteUrl } from '@/lib/utils/url';
-import { useQuery } from '@tanstack/react-query';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { communityKeys } from '@/features/community';
+import { getApiErrorMessage } from '@/lib/utils/error';
 
 const TYPE_LABELS: Record<string, { label: string; icon: keyof typeof Ionicons.glyphMap; color: string }> = {
   HelpRequested: { label: 'Yardım Talebi', icon: 'hand-left-outline', color: '#ef4444' },
@@ -34,31 +37,31 @@ const TYPE_LABELS: Record<string, { label: string; icon: keyof typeof Ionicons.g
 export default function CommunityPostDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const currentUser = useAuthStore((s) => s.user);
-  const { data: post, isLoading } = useCommunityPostById(id ?? null);
+  const { data: post, isLoading, isError, error } = useCommunityPostById(id ?? null);
   const deletePost = useDeletePost();
-  const queryClient = useQueryClient();
+  const { data: comments = [] } = usePostComments(id ?? null);
+  const addComment = useAddComment(id ?? '');
   const [newComment, setNewComment] = useState('');
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
 
-  const { data: comments = [] } = useQuery({
-    queryKey: [...communityKeys.detail(id ?? ''), 'comments'],
-    queryFn: () => communityApi.getComments(id!),
-    enabled: !!id,
-  });
-
-  const addComment = useMutation({
-    mutationFn: (content: string) => communityApi.addComment(id!, content),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [...communityKeys.detail(id ?? ''), 'comments'] });
-      setNewComment('');
-    },
-  });
-
-  if (isLoading || !post) {
+  if (isLoading) {
     return (
       <ScreenContainer>
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#2563EB" />
+        </View>
+      </ScreenContainer>
+    );
+  }
+
+  if (isError || !post) {
+    return (
+      <ScreenContainer>
+        <View className="flex-1 items-center justify-center px-4">
+          <Ionicons name="warning-outline" size={40} color="#ef4444" />
+          <Text className="text-base text-red-500 text-center mt-3">
+            {getApiErrorMessage(error, 'Topluluk gonderisi yuklenemedi.')}
+          </Text>
         </View>
       </ScreenContainer>
     );
@@ -69,8 +72,8 @@ export default function CommunityPostDetailScreen() {
 
   const handleSendComment = () => {
     const text = newComment.trim();
-    if (text.length < 2) return;
-    addComment.mutate(text);
+    if (text.length < 2 || addComment.isPending) return;
+    addComment.mutate(text, { onSuccess: () => setNewComment('') });
   };
 
   const handleDelete = () => {
@@ -96,6 +99,7 @@ export default function CommunityPostDetailScreen() {
           contentContainerStyle={{ paddingBottom: 16 }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          nestedScrollEnabled
         >
           <View className="px-4 pt-5">
             <View className="flex-row items-center gap-2 mb-3">

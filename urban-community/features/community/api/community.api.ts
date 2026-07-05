@@ -78,6 +78,14 @@ export interface CreateCommunityPostData {
   media?: { uri: string; type: string; name: string }[];
 }
 
+function unwrapApiData<T>(response: ApiResponse<T>): T {
+  if (!response.isSuccess || response.data == null) {
+    throw new Error(response.errors?.[0] ?? 'İşlem başarısız.');
+  }
+
+  return response.data;
+}
+
 export const communityApi = {
   getPosts: (params: {
     scope?: CommunityPostScope;
@@ -90,12 +98,12 @@ export const communityApi = {
   }): Promise<CommunityPostListItem[]> =>
     apiClient
       .get<ApiResponse<CommunityPostListItem[]>>('/api/community-posts', { params })
-      .then((res) => res.data.data),
+      .then((res) => unwrapApiData(res.data)),
 
   getPostById: (id: string): Promise<CommunityPostDetail> =>
     apiClient
       .get<ApiResponse<CommunityPostDetail>>(`/api/community-posts/${id}`)
-      .then((res) => res.data.data),
+      .then((res) => unwrapApiData(res.data)),
 
   createPost: (data: CreateCommunityPostData) => {
     const formData = new FormData();
@@ -117,30 +125,30 @@ export const communityApi = {
     }
     return apiClient
       .post<ApiResponse<CommunityPostDetail>>('/api/community-posts', formData)
-      .then((res) => res.data.data);
+      .then((res) => unwrapApiData(res.data));
   },
 
   getComments: (postId: string): Promise<CommunityPostComment[]> =>
     apiClient
       .get<ApiResponse<CommunityPostComment[]>>(`/api/community-posts/${postId}/comments`)
-      .then((res) => res.data.data),
+      .then((res) => unwrapApiData(res.data)),
 
   addComment: (postId: string, content: string) =>
     apiClient
       .post<ApiResponse<CommunityPostComment>>(`/api/community-posts/${postId}/comments`, { content })
-      .then((res) => res.data.data),
+      .then((res) => unwrapApiData(res.data)),
 
   updatePost: (id: string, data: { title: string; content: string }) => {
     const formData = new FormData();
     formData.append('title', data.title);
     formData.append('content', data.content);
     return apiClient
-      .put<ApiResponse<CommunityPostDetail>>(`/api/community-posts/${id}`, formData)
-      .then((res) => res.data.data);
+      .put<ApiResponse<Record<string, unknown>>>(`/api/community-posts/${id}`, formData)
+      .then((res) => unwrapApiData(res.data));
   },
 
   deletePost: (id: string) =>
     apiClient
       .delete<ApiResponse<unknown>>(`/api/community-posts/${id}`)
-      .then((res) => res.data.data),
+      .then((res) => unwrapApiData(res.data)),
 };

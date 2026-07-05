@@ -2,7 +2,10 @@ import type { AxiosError } from 'axios';
 
 interface BackendErrorResponse {
   isSuccess: false;
-  errors: string[];
+  errors?: string[] | Record<string, string[]>;
+  title?: string;
+  detail?: string;
+  traceId?: string;
 }
 
 /**
@@ -17,7 +20,26 @@ export function getApiErrorMessage(
   const axiosError = error as AxiosError<BackendErrorResponse>;
   const errors = axiosError?.response?.data?.errors;
   if (Array.isArray(errors) && errors.length > 0) {
-    return errors.join('\n');
+    return appendTraceId(errors.join('\n'), axiosError.response?.data?.traceId);
+  }
+  if (errors && typeof errors === 'object') {
+    const validationMessages = Object.values(errors).flat();
+    if (validationMessages.length > 0) {
+      return appendTraceId(validationMessages.join('\n'), axiosError.response?.data?.traceId);
+    }
+  }
+  const message =
+    axiosError?.response?.data?.detail ??
+    axiosError?.response?.data?.title;
+  if (message) {
+    return appendTraceId(message, axiosError.response?.data?.traceId);
+  }
+  if (error instanceof Error && error.message) {
+    return error.message;
   }
   return fallback;
+}
+
+function appendTraceId(message: string, traceId?: string): string {
+  return traceId ? `${message}\nİzleme kodu: ${traceId}` : message;
 }

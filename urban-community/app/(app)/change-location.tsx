@@ -1,7 +1,6 @@
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
-import { Pressable } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { ScreenContainer } from '@/components/layout/ScreenContainer';
 import { SelectPicker, type SelectOption } from '@/components/ui/SelectPicker';
 import { useAuthStore } from '@/features/auth';

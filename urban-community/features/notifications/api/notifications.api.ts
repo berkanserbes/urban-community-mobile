@@ -1,4 +1,5 @@
 import { apiClient } from '@/lib/api/axios';
+import { unwrapApiData } from '@/lib/api/result';
 import type { ApiResponse } from '@/types/api.types';
 
 export interface NotificationDto {
@@ -19,35 +20,35 @@ export const notificationsApi = {
   getNotifications: (params?: { isRead?: boolean }): Promise<NotificationDto[]> =>
     apiClient
       .get<ApiResponse<NotificationDto[]>>('/api/notifications', { params })
-      .then((res) => res.data.data),
+      .then((res) => unwrapApiData(res.data)),
 
   getUnreadCount: (): Promise<UnreadCountDto> =>
     apiClient
       .get<ApiResponse<UnreadCountDto>>('/api/notifications/unread-count')
-      .then((res) => res.data.data),
+      .then((res) => unwrapApiData(res.data)),
 
   markAsRead: (id: string) =>
     apiClient
       .patch<ApiResponse<unknown>>(`/api/notifications/${id}/read`)
-      .then((res) => res.data.data),
+      .then((res) => unwrapApiData(res.data)),
 
   markAllAsRead: () =>
     apiClient
       .patch<ApiResponse<unknown>>('/api/notifications/read-all')
-      .then((res) => res.data.data),
+      .then((res) => unwrapApiData(res.data)),
 
   markAsUnread: (id: string) =>
     apiClient
       .patch<ApiResponse<unknown>>(`/api/notifications/${id}/unread`)
-      .then((res) => res.data.data),
+      .then((res) => unwrapApiData(res.data)),
 
   deleteNotification: (id: string) =>
     apiClient
       .delete<ApiResponse<unknown>>(`/api/notifications/${id}`)
-      .then((res) => res.data.data),
+      .then((res) => unwrapApiData(res.data)),
 
   deleteAll: () =>
     apiClient
       .delete<ApiResponse<unknown>>('/api/notifications')
-      .then((res) => res.data.data),
+      .then((res) => unwrapApiData(res.data)),
 };

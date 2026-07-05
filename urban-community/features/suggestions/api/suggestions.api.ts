@@ -71,7 +71,7 @@ export const suggestionsApi = {
     apiClient
       .get<ApiResponse<SuggestionListItemResponse[]>>('/api/suggestions', { params })
       .then((res) =>
-        res.data.data.map((item) => {
+        unwrapApiData(res.data).map((item) => {
           const { currentUserIsUpvote, ...suggestion } = item;
 
           return {
@@ -84,12 +84,12 @@ export const suggestionsApi = {
   getSuggestionById: (id: string): Promise<SuggestionDetail> =>
     apiClient
       .get<ApiResponse<SuggestionDetail>>(`/api/suggestions/${id}`)
-      .then((res) => res.data.data),
+      .then((res) => unwrapApiData(res.data)),
 
   createSuggestion: (data: { title: string; content: string }) =>
     apiClient
       .post<ApiResponse<SuggestionDetail>>('/api/suggestions', data)
-      .then((res) => res.data.data),
+      .then((res) => unwrapApiData(res.data)),
 
   vote: (suggestionId: string, isUpvote: boolean): Promise<VoteSummary> =>
     apiClient
@@ -135,17 +135,17 @@ export const suggestionsApi = {
   getComments: (suggestionId: string): Promise<SuggestionComment[]> =>
     apiClient
       .get<ApiResponse<SuggestionComment[]>>(`/api/suggestions/${suggestionId}/comments`)
-      .then((res) => res.data.data),
+      .then((res) => unwrapApiData(res.data)),
 
   addComment: (suggestionId: string, content: string) =>
     apiClient
       .post<ApiResponse<SuggestionComment>>(`/api/suggestions/${suggestionId}/comments`, { content })
-      .then((res) => res.data.data),
+      .then((res) => unwrapApiData(res.data)),
 
   updateSuggestion: (id: string, data: { title: string; content: string }) =>
     apiClient
       .put<ApiResponse<SuggestionDetail>>(`/api/suggestions/${id}`, data)
-      .then((res) => res.data.data),
+      .then((res) => unwrapApiData(res.data)),
 
   getVoteSummary: (suggestionId: string): Promise<VoteSummary> =>
     apiClient
@@ -170,5 +170,5 @@ export const suggestionsApi = {
   deleteSuggestion: (id: string) =>
     apiClient
       .delete<ApiResponse<unknown>>(`/api/suggestions/${id}`)
-      .then((res) => res.data.data),
+      .then((res) => unwrapApiData(res.data)),
 };

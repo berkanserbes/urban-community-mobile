@@ -6,6 +6,7 @@ import { ScreenContainer } from '@/components/layout/ScreenContainer';
 import { useProfile } from '@/features/user';
 import { useAnnouncements } from '@/features/announcements';
 import { useAuthStore } from '@/features/auth';
+import { getApiErrorMessage } from '@/lib/utils/error';
 
 export default function AnnouncementsScreen() {
   const user = useAuthStore((s) => s.user);
@@ -15,6 +16,7 @@ export default function AnnouncementsScreen() {
     data: announcements = [],
     isLoading: announcementsLoading,
     isError: announcementsError,
+    error: announcementsQueryError,
     refetch,
   } = useAnnouncements({
     provinceId: profile?.provinceId ?? undefined,
@@ -52,7 +54,9 @@ export default function AnnouncementsScreen() {
         ListEmptyComponent={
           <View className="items-center justify-center py-12">
             <Text className={announcementsError ? 'text-red-500' : 'text-gray-500 dark:text-gray-400'}>
-              {announcementsError ? 'Duyurular yüklenemedi' : 'Henüz duyuru yok'}
+              {announcementsError
+                ? getApiErrorMessage(announcementsQueryError, 'Duyurular yuklenemedi.')
+                : 'Henüz duyuru yok'}
             </Text>
           </View>
         }

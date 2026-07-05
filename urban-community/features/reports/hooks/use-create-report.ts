@@ -12,6 +12,7 @@ export function useCreateReport() {
     mutationFn: (data: CreateReportData) => reportsApi.createReport(data),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: reportKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: reportKeys.my() });
       Toast.show({ type: 'success', text1: 'Rapor oluşturuldu', text2: data.title });
       router.back();
     },

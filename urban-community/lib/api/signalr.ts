@@ -34,7 +34,7 @@ export async function connectSignalR(): Promise<HubConnection> {
 
   connection = new HubConnectionBuilder()
     .withUrl(`${API_BASE_URL}/hubs/notifications`, {
-      accessTokenFactory: () => token,
+      accessTokenFactory: () => useAuthStore.getState().token ?? '',
     })
     .withAutomaticReconnect([0, 2000, 5000, 10_000, 30_000])
     .configureLogging(LogLevel.Warning)

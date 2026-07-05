@@ -1,6 +1,14 @@
 import { apiClient } from '@/lib/api/axios';
 import type { ApiResponse } from '@/types/api.types';
 
+function unwrapApiData<T>(response: ApiResponse<T>): T {
+  if (!response.isSuccess || response.data == null) {
+    throw new Error(response.errors?.[0] ?? 'İşlem başarısız.');
+  }
+
+  return response.data;
+}
+
 export interface UserProfileDto {
   id: string;
   firstName: string;
@@ -43,12 +51,12 @@ export const userApi = {
   getMe: () =>
     apiClient
       .get<ApiResponse<UserProfileDto>>('/api/users/me')
-      .then((res) => res.data.data),
+      .then((res) => unwrapApiData(res.data)),
 
   updateProfile: (data: UpdateProfileDto) =>
     apiClient
       .put<ApiResponse<UserProfileDto>>('/api/users/me/profile', data)
-      .then((res) => res.data.data),
+      .then((res) => unwrapApiData(res.data)),
 
   updateProfileImage: (imageUri: string, mimeType: string) => {
     const formData = new FormData();
@@ -62,11 +70,16 @@ export const userApi = {
         '/api/users/me/profile-image',
         formData,
       )
-      .then((res) => res.data.data);
+      .then((res) => unwrapApiData(res.data));
   },
 
-  deleteProfileImage: () => apiClient.delete('/api/users/me/profile-image'),
+  deleteProfileImage: () =>
+    apiClient
+      .delete<ApiResponse<unknown>>('/api/users/me/profile-image')
+      .then((res) => unwrapApiData(res.data)),
 
   changePassword: (data: ChangePasswordDto) =>
-    apiClient.put('/api/users/me/password', data).then((res) => res.data),
+    apiClient
+      .put<ApiResponse<unknown>>('/api/users/me/password', data)
+      .then((res) => unwrapApiData(res.data)),
 };

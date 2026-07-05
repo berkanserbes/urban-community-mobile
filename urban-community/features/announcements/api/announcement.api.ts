@@ -1,4 +1,5 @@
 import { apiClient } from '@/lib/api/axios';
+import { unwrapApiData } from '@/lib/api/result';
 import type { ApiResponse } from '@/types/api.types';
 
 export interface AnnouncementDto {
@@ -38,15 +39,15 @@ export const announcementApi = {
   }): Promise<AnnouncementDto[]> =>
     apiClient
       .get<ApiResponse<AnnouncementDto[]>>('/api/announcements', { params })
-      .then((res) => res.data.data),
+      .then((res) => unwrapApiData(res.data)),
 
   getAnnouncementById: (id: string): Promise<AnnouncementDto> =>
     apiClient
       .get<ApiResponse<AnnouncementDto>>(`/api/announcements/${id}`)
-      .then((res) => res.data.data),
+      .then((res) => unwrapApiData(res.data)),
 
   createAnnouncement: (data: CreateAnnouncementDto): Promise<AnnouncementDto> =>
     apiClient
       .post<ApiResponse<AnnouncementDto>>('/api/announcements', data)
-      .then((res) => res.data.data),
+      .then((res) => unwrapApiData(res.data)),
 };

@@ -4,8 +4,8 @@ import { useCallback, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
 import { CommunityPostCard } from '@/components/ui/CommunityPostCard';
 import { ScreenContainer } from '@/components/layout/ScreenContainer';
-import { useProfile } from '@/features/user';
 import { useCommunityPosts, type PostType } from '@/features/community';
+import { getApiErrorMessage } from '@/lib/utils/error';
 
 const TYPE_FILTERS: { label: string; value: PostType | null; icon: keyof typeof Ionicons.glyphMap }[] = [
   { label: 'Hepsi', value: null, icon: 'grid-outline' },
@@ -15,16 +15,16 @@ const TYPE_FILTERS: { label: string; value: PostType | null; icon: keyof typeof 
 ];
 
 export default function CommunityScreen() {
-  const { data: profile } = useProfile();
   const [activeFilter, setActiveFilter] = useState<PostType | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   const {
     data: posts = [],
     isLoading,
+    isError,
+    error,
     refetch,
   } = useCommunityPosts({
-    neighborhoodId: profile?.neighborhoodId ?? undefined,
     type: activeFilter ?? undefined,
   });
 
@@ -78,6 +78,13 @@ export default function CommunityScreen() {
         {isLoading && posts.length === 0 ? (
           <View className="flex-1 items-center justify-center">
             <ActivityIndicator size="large" color="#2563EB" />
+          </View>
+        ) : isError ? (
+          <View className="flex-1 items-center justify-center px-4">
+            <Ionicons name="warning-outline" size={48} color="#ef4444" />
+            <Text className="text-base text-red-500 text-center mt-3">
+              {getApiErrorMessage(error, 'Topluluk gonderileri yuklenemedi.')}
+            </Text>
           </View>
         ) : posts.length === 0 ? (
           <View className="flex-1 items-center justify-center px-4">

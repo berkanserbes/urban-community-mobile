@@ -3,8 +3,16 @@ import { useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, FlatList, Image, ScrollView, Text, View } from 'react-native';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { ScreenContainer } from '@/components/layout/ScreenContainer';
-import { useReportById, type ReportHistoryDto } from '@/features/reports';
+import { useReportById, type ReportHistoryDto, type ReportPriority } from '@/features/reports';
 import { toAbsoluteUrl } from '@/lib/utils/url';
+import { getApiErrorMessage } from '@/lib/utils/error';
+
+const PRIORITY_LABELS: Record<ReportPriority, string> = {
+  Low: 'Düşük',
+  Medium: 'Orta',
+  High: 'Yüksek',
+  Urgent: 'Acil',
+};
 
 function HistoryTimeline({ history }: { history: ReportHistoryDto[] }) {
   return (
@@ -36,9 +44,9 @@ function HistoryTimeline({ history }: { history: ReportHistoryDto[] }) {
 
 export default function ReportDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { data: report, isLoading } = useReportById(id ?? null);
+  const { data: report, isLoading, isError, error } = useReportById(id ?? null);
 
-  if (isLoading || !report) {
+  if (isLoading) {
     return (
       <ScreenContainer>
         <View className="flex-1 items-center justify-center">
@@ -48,12 +56,39 @@ export default function ReportDetailScreen() {
     );
   }
 
+  if (isError || !report) {
+    return (
+      <ScreenContainer>
+        <View className="flex-1 items-center justify-center px-4">
+          <Ionicons name="warning-outline" size={40} color="#ef4444" />
+          <Text className="text-base text-red-500 text-center mt-3">
+            {getApiErrorMessage(error, 'Rapor yuklenemedi.')}
+          </Text>
+        </View>
+      </ScreenContainer>
+    );
+  }
+
+  const sortedHistory = [...report.history].sort(
+    (a, b) => new Date(b.changedAt).getTime() - new Date(a.changedAt).getTime()
+  );
+  const aiReviewNote = sortedHistory.find(
+    (item) =>
+      item.changedByUserFullName === null &&
+      item.note?.toLowerCase().includes('ai')
+  )?.note;
+  const aiReviewText =
+    report.status === 'AiReview'
+      ? 'AI incelemesi devam ediyor. Kategori, öncelik ve benzer rapor analizi tamamlanınca burada görünecek.'
+      : aiReviewNote ?? 'AI inceleme notu bulunamadı.';
+
   return (
     <ScreenContainer scrollable={false}>
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ paddingBottom: 32 }}
         showsVerticalScrollIndicator={false}
+        nestedScrollEnabled
       >
         {report.media.length > 0 && (
           <FlatList
@@ -132,6 +167,35 @@ export default function ReportDetailScreen() {
             )}
           </View>
 
+          <View className="bg-indigo-50 dark:bg-indigo-950/30 rounded-xl p-4 mb-6 border border-indigo-100 dark:border-indigo-900/50">
+            <View className="flex-row items-center gap-2 mb-3">
+              <Ionicons name="sparkles-outline" size={18} color="#4f46e5" />
+              <Text className="text-lg font-bold text-gray-900 dark:text-white">
+                AI İncelemesi
+              </Text>
+            </View>
+            <Text className="text-sm text-gray-700 dark:text-gray-300 leading-5 mb-3">
+              {aiReviewText}
+            </Text>
+            <View className="flex-row flex-wrap gap-2">
+              <View className="rounded-full bg-white dark:bg-gray-800 px-3 py-1 border border-indigo-100 dark:border-indigo-900">
+                <Text className="text-xs font-medium text-gray-700 dark:text-gray-200">
+                  Kategori: {report.categoryName}
+                </Text>
+              </View>
+              <View className="rounded-full bg-white dark:bg-gray-800 px-3 py-1 border border-indigo-100 dark:border-indigo-900">
+                <Text className="text-xs font-medium text-gray-700 dark:text-gray-200">
+                  Öncelik: {PRIORITY_LABELS[report.priority]}
+                </Text>
+              </View>
+              <View className="rounded-full bg-white dark:bg-gray-800 px-3 py-1 border border-indigo-100 dark:border-indigo-900">
+                <Text className="text-xs font-medium text-gray-700 dark:text-gray-200">
+                  Benzer: {report.similarReports.length}
+                </Text>
+              </View>
+            </View>
+          </View>
+
           {report.similarReports.length > 0 && (
             <View className="mb-6">
               <Text className="text-lg font-bold text-gray-900 dark:text-white mb-3">
@@ -151,6 +215,11 @@ export default function ReportDetailScreen() {
                       %{Math.round(similar.similarityScore * 100)} benzerlik
                     </Text>
                   </View>
+                  {similar.reasoning && (
+                    <Text className="text-xs text-gray-600 dark:text-gray-400 leading-5 mt-2">
+                      {similar.reasoning}
+                    </Text>
+                  )}
                 </View>
               ))}
             </View>

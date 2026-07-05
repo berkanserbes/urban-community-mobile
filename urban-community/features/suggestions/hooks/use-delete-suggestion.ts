@@ -12,6 +12,7 @@ export function useDeleteSuggestion() {
     mutationFn: (id: string) => suggestionsApi.deleteSuggestion(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: suggestionKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: suggestionKeys.details() });
       Toast.show({ type: 'success', text1: 'Öneri silindi' });
       router.back();
     },

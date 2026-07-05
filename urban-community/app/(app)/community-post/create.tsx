@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/Input';
 import { ScreenContainer } from '@/components/layout/ScreenContainer';
 import { useAuthStore } from '@/features/auth';
 import { useCreateCommunityPost, useCommunityPostById, useUpdatePost, type PostType, type CommunityPostScope } from '@/features/community';
+import { useProfile } from '@/features/user';
 
 const createPostSchema = z.object({
   title: z.string().min(3, 'Başlık en az 3 karakter olmalıdır').max(150, 'Başlık en fazla 150 karakter olabilir'),
@@ -35,6 +36,7 @@ export default function CreateCommunityPostScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const isEdit = !!id;
   const user = useAuthStore((s) => s.user);
+  const { data: profile } = useProfile();
   const { data: existing, isLoading: loadingExisting } = useCommunityPostById(id ?? null);
   const createPost = useCreateCommunityPost();
   const updatePost = useUpdatePost();
@@ -55,6 +57,8 @@ export default function CreateCommunityPostScreen() {
   useEffect(() => {
     if (existing) {
       reset({ title: existing.title, content: existing.content });
+      setSelectedType(existing.type);
+      setSelectedScope(existing.scope);
     }
   }, [existing, reset]);
 
@@ -138,12 +142,33 @@ export default function CreateCommunityPostScreen() {
     if (isEdit && id) {
       updatePost.mutate({ id, data: { title: data.title, content: data.content } });
     } else {
+      const provinceId = profile?.provinceId ?? undefined;
+      const districtId = profile?.districtId ?? undefined;
+      const neighborhoodId = profile?.neighborhoodId ?? user?.neighborhoodId ?? undefined;
+
+      if (selectedScope === 'Province' && !provinceId) {
+        Alert.alert('Konum Eksik', 'İl kapsamında paylaşım yapmak için profil konumunuzu tamamlayın.');
+        return;
+      }
+
+      if (selectedScope === 'District' && !districtId) {
+        Alert.alert('Konum Eksik', 'İlçe kapsamında paylaşım yapmak için profil konumunuzu tamamlayın.');
+        return;
+      }
+
+      if (selectedScope === 'Neighborhood' && !neighborhoodId) {
+        Alert.alert('Konum Eksik', 'Mahalle kapsamında paylaşım yapmak için profil konumunuzu tamamlayın.');
+        return;
+      }
+
       createPost.mutate({
         type: selectedType,
         title: data.title,
         content: data.content,
         scope: selectedScope,
-        neighborhoodId: selectedScope === 'Neighborhood' ? (user?.neighborhoodId ?? undefined) : undefined,
+        provinceId: selectedScope === 'Province' ? provinceId : undefined,
+        districtId: selectedScope === 'District' ? districtId : undefined,
+        neighborhoodId: selectedScope === 'Neighborhood' ? neighborhoodId : undefined,
         media: media.length > 0 ? media : undefined,
       });
     }
@@ -170,6 +195,7 @@ export default function CreateCommunityPostScreen() {
               </Text>
             </View>
 
+            {!isEdit && (
             <View className="gap-2">
               <Text className="text-sm font-medium text-gray-700 dark:text-gray-300">Tür</Text>
               <View className="flex-row gap-2">
@@ -201,7 +227,9 @@ export default function CreateCommunityPostScreen() {
                 ))}
               </View>
             </View>
+            )}
 
+            {!isEdit && (
             <View className="gap-2">
               <Text className="text-sm font-medium text-gray-700 dark:text-gray-300">Görünürlük</Text>
               <View className="flex-row gap-2">
@@ -228,6 +256,7 @@ export default function CreateCommunityPostScreen() {
                 ))}
               </View>
             </View>
+            )}
 
             <View className="gap-4">
               <Controller
@@ -275,6 +304,7 @@ export default function CreateCommunityPostScreen() {
               </View>
             </View>
 
+            {!isEdit && (
             <View className="gap-2">
               <Text className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 Fotoğraf / Video ({media.length}/10)
@@ -308,6 +338,7 @@ export default function CreateCommunityPostScreen() {
                 </Pressable>
               )}
             </View>
+            )}
 
             {(createPost.isError || updatePost.isError) && (
               <Text className="text-sm text-red-500 text-center">

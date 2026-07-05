@@ -26,11 +26,12 @@ import {
   useDeleteSuggestion,
   type VoteSummary,
 } from '@/features/suggestions';
+import { getApiErrorMessage } from '@/lib/utils/error';
 
 export default function SuggestionDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const currentUser = useAuthStore((s) => s.user);
-  const { data: suggestion, isLoading } = useSuggestionById(id ?? null);
+  const { data: suggestion, isLoading, isError, error } = useSuggestionById(id ?? null);
   const { data: comments = [] } = useComments(id ?? null);
   const addComment = useAddComment(id ?? '');
   const { vote, removeVote } = useVote(id ?? '');
@@ -58,11 +59,24 @@ export default function SuggestionDetailScreen() {
     }
   }, [voteSummary]);
 
-  if (isLoading || !suggestion) {
+  if (isLoading) {
     return (
       <ScreenContainer>
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#2563EB" />
+        </View>
+      </ScreenContainer>
+    );
+  }
+
+  if (isError || !suggestion) {
+    return (
+      <ScreenContainer>
+        <View className="flex-1 items-center justify-center px-4">
+          <Ionicons name="warning-outline" size={40} color="#ef4444" />
+          <Text className="text-base text-red-500 text-center mt-3">
+            {getApiErrorMessage(error, 'Oneri yuklenemedi.')}
+          </Text>
         </View>
       </ScreenContainer>
     );

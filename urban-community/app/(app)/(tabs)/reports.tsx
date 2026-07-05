@@ -4,9 +4,8 @@ import { useCallback, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
 import { ReportCard } from '@/components/ui/ReportCard';
 import { ScreenContainer } from '@/components/layout/ScreenContainer';
-import { useAuthStore } from '@/features/auth';
 import { useMyReports, useReports, type ReportStatus } from '@/features/reports';
-import { useProfile } from '@/features/user';
+import { getApiErrorMessage } from '@/lib/utils/error';
 
 const STATUS_FILTERS: { label: string; value: ReportStatus | null }[] = [
   { label: 'Tümü', value: null },
@@ -16,31 +15,41 @@ const STATUS_FILTERS: { label: string; value: ReportStatus | null }[] = [
   { label: 'Çözüldü', value: 'Resolved' },
 ];
 
+const SCOPE_OPTIONS: { label: string; value: string }[] = [
+  { label: 'Mahalle', value: 'Neighborhood' },
+  { label: 'İlçe', value: 'District' },
+  { label: 'İl', value: 'Province' },
+];
+
 export default function ReportsScreen() {
-  const user = useAuthStore((s) => s.user);
-  const { data: profile } = useProfile();
   const [activeFilter, setActiveFilter] = useState<ReportStatus | null>(null);
   const [showMine, setShowMine] = useState(false);
+  const [scope, setScope] = useState('Neighborhood');
   const [refreshing, setRefreshing] = useState(false);
-  const neighborhoodId = profile?.neighborhoodId ?? user?.neighborhoodId ?? undefined;
 
   const {
     data: allReports = [],
     isLoading: loadingAll,
+    isError: isAllError,
+    error: allError,
     refetch: refetchAll,
   } = useReports({
-    neighborhoodId,
+    scope,
     status: activeFilter ?? undefined,
   });
 
   const {
     data: myReports = [],
     isLoading: loadingMine,
+    isError: isMineError,
+    error: mineError,
     refetch: refetchMine,
   } = useMyReports();
 
   const reports = showMine ? myReports : allReports;
   const isLoading = showMine ? loadingMine : loadingAll;
+  const isError = showMine ? isMineError : isAllError;
+  const error = showMine ? mineError : allError;
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -79,6 +88,26 @@ export default function ReportsScreen() {
         </View>
 
         {!showMine && (
+          <>
+          <View className="flex-row px-4 pb-2 gap-2">
+            {SCOPE_OPTIONS.map((opt) => (
+              <Pressable
+                key={opt.value}
+                onPress={() => setScope(opt.value)}
+                className={`px-3 py-1.5 rounded-full ${
+                  scope === opt.value ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-gray-100 dark:bg-gray-800'
+                }`}
+              >
+                <Text
+                  className={`text-xs font-medium ${
+                    scope === opt.value ? 'text-blue-700 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'
+                  }`}
+                >
+                  {opt.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
           <View className="px-4 pb-2">
             <FlatList
               horizontal
@@ -105,17 +134,25 @@ export default function ReportsScreen() {
               )}
             />
           </View>
+          </>
         )}
 
         {isLoading && reports.length === 0 ? (
           <View className="flex-1 items-center justify-center">
             <ActivityIndicator size="large" color="#2563EB" />
           </View>
+        ) : isError ? (
+          <View className="flex-1 items-center justify-center px-4">
+            <Ionicons name="warning-outline" size={48} color="#ef4444" />
+            <Text className="text-base text-red-500 mt-3 text-center">
+              {getApiErrorMessage(error, 'Raporlar yuklenemedi.')}
+            </Text>
+          </View>
         ) : reports.length === 0 ? (
           <View className="flex-1 items-center justify-center px-4">
             <Ionicons name="document-text-outline" size={48} color="#cbd5e1" />
             <Text className="text-base text-gray-400 mt-3 text-center">
-              {showMine ? 'Henüz rapor oluşturmadın' : 'Mahallede henüz rapor yok'}
+              {showMine ? 'Henüz rapor oluşturmadın' : `${{ Neighborhood: 'Mahallede', District: 'İlçede', Province: 'İlde' }[scope] ?? 'Bölgede'} henüz rapor yok`}
             </Text>
             <Pressable
               onPress={() => router.push('/(app)/report/create' as any)}

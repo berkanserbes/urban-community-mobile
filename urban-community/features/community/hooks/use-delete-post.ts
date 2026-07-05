@@ -12,6 +12,7 @@ export function useDeletePost() {
     mutationFn: (id: string) => communityApi.deletePost(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: communityKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: communityKeys.details() });
       Toast.show({ type: 'success', text1: 'Gönderi silindi' });
       router.back();
     },

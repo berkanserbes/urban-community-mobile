@@ -42,7 +42,6 @@ export default function AppLayout() {
   }
 
   if (user?.neighborhoodId === null) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return <Redirect href={'/(onboarding)/location-select' as any} />;
   }
 

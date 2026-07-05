@@ -5,7 +5,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
 import { SuggestionCard } from '@/components/ui/SuggestionCard';
 import { ScreenContainer } from '@/components/layout/ScreenContainer';
+import { useAuthStore } from '@/features/auth';
 import { useProfile } from '@/features/user';
+import { getApiErrorMessage } from '@/lib/utils/error';
 import {
   getNextVoteSummary,
   useSuggestions,
@@ -24,16 +26,20 @@ const STATUS_FILTERS: { label: string; value: SuggestionStatus | null }[] = [
 ];
 
 export default function SuggestionsScreen() {
+  const user = useAuthStore((s) => s.user);
   const { data: profile } = useProfile();
   const [activeFilter, setActiveFilter] = useState<SuggestionStatus | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const neighborhoodId = profile?.neighborhoodId ?? user?.neighborhoodId ?? undefined;
 
   const {
     data: suggestions = [],
     isLoading,
+    isError,
+    error,
     refetch,
   } = useSuggestions({
-    neighborhoodId: profile?.neighborhoodId ?? undefined,
+    neighborhoodId,
     status: activeFilter ?? undefined,
   });
 
@@ -88,6 +94,13 @@ export default function SuggestionsScreen() {
         {isLoading && suggestions.length === 0 ? (
           <View className="flex-1 items-center justify-center">
             <ActivityIndicator size="large" color="#2563EB" />
+          </View>
+        ) : isError ? (
+          <View className="flex-1 items-center justify-center px-4">
+            <Ionicons name="warning-outline" size={48} color="#ef4444" />
+            <Text className="text-base text-red-500 text-center mt-3">
+              {getApiErrorMessage(error, 'Oneriler yuklenemedi.')}
+            </Text>
           </View>
         ) : suggestions.length === 0 ? (
           <View className="flex-1 items-center justify-center px-4">
