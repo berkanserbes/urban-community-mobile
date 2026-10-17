@@ -8,7 +8,7 @@ import { FeedSection } from '@/components/ui/FeedSection';
 import { NotificationIcon } from '@/components/ui/NotificationIcon';
 import { ReportCard } from '@/components/ui/ReportCard';
 import { useAuthStore } from '@/features/auth';
-import { useAnnouncements } from '@/features/announcements';
+import { useLatestAnnouncements } from '@/features/announcements';
 import { useLatestReports } from '@/features/reports';
 import { useLatestCommunityPosts } from '@/features/community';
 import { useProfile } from '@/features/user';
@@ -55,11 +55,14 @@ export default function HomeScreen() {
     isError: announcementsError,
     error: announcementsErrorData,
     refetch: refetchAnnouncements,
-  } = useAnnouncements({
-    provinceId: profile?.provinceId ?? undefined,
-    districtId: profile?.districtId ?? undefined,
-    neighborhoodId: profile?.neighborhoodId ?? user?.neighborhoodId ?? undefined,
-  });
+  } = useLatestAnnouncements(
+    {
+      provinceId: profile?.provinceId ?? undefined,
+      districtId: profile?.districtId ?? undefined,
+      neighborhoodId: profile?.neighborhoodId ?? user?.neighborhoodId ?? undefined,
+    },
+    FEED_PREVIEW_COUNT,
+  );
 
   const {
     data: communityPosts = [],
@@ -83,7 +86,7 @@ export default function HomeScreen() {
     (displayUser?.lastName?.[0] ?? '').toUpperCase();
   const fullName = displayUser ? `${displayUser.firstName} ${displayUser.lastName}` : '';
   const recentReports = reports;
-  const recentAnnouncements = announcements.slice(0, 3);
+  const recentAnnouncements = announcements;
   const recentPosts = communityPosts;
 
   return (

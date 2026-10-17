@@ -1,6 +1,6 @@
 import { apiClient } from '@/lib/api/axios';
 import { unwrapApiData } from '@/lib/api/result';
-import type { ApiResponse } from '@/types/api.types';
+import type { ApiResponse, PagedResult, PaginationParams } from '@/types/api.types';
 
 export interface AnnouncementDto {
   id: string;
@@ -32,13 +32,13 @@ export interface CreateAnnouncementDto {
 }
 
 export const announcementApi = {
-  getAnnouncements: (params: {
+  getAnnouncements: (params: PaginationParams & {
     provinceId?: string;
     districtId?: string;
     neighborhoodId?: string;
-  }): Promise<AnnouncementDto[]> =>
+  }): Promise<PagedResult<AnnouncementDto>> =>
     apiClient
-      .get<ApiResponse<AnnouncementDto[]>>('/api/announcements', { params })
+      .get<ApiResponse<PagedResult<AnnouncementDto>>>('/api/announcements', { params })
       .then((res) => unwrapApiData(res.data)),
 
   getAnnouncementById: (id: string): Promise<AnnouncementDto> =>

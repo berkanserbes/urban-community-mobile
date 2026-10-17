@@ -2,27 +2,30 @@ import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, Text, View } from 'react-native';
 import { AnnouncementCard } from '@/components/ui/AnnouncementCard';
+import { ListFooterLoader } from '@/components/ui/ListFooterLoader';
 import { ScreenContainer } from '@/components/layout/ScreenContainer';
 import { useProfile } from '@/features/user';
 import { useAnnouncements } from '@/features/announcements';
 import { useAuthStore } from '@/features/auth';
+import { loadNextPage } from '@/lib/api/pagination';
 import { getApiErrorMessage } from '@/lib/utils/error';
 
 export default function AnnouncementsScreen() {
   const user = useAuthStore((s) => s.user);
   const { data: profile, isLoading: profileLoading } = useProfile();
   const neighborhoodId = profile?.neighborhoodId ?? user?.neighborhoodId ?? undefined;
-  const {
-    data: announcements = [],
-    isLoading: announcementsLoading,
-    isError: announcementsError,
-    error: announcementsQueryError,
-    refetch,
-  } = useAnnouncements({
+  const announcementsQuery = useAnnouncements({
     provinceId: profile?.provinceId ?? undefined,
     districtId: profile?.districtId ?? undefined,
     neighborhoodId,
   });
+  const {
+    isLoading: announcementsLoading,
+    isError: announcementsError,
+    error: announcementsQueryError,
+    refetch,
+  } = announcementsQuery;
+  const announcements = announcementsQuery.data?.items ?? [];
 
   const [refreshing, setRefreshing] = useState(false);
 
@@ -69,6 +72,9 @@ export default function AnnouncementsScreen() {
           />
         )}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        onEndReached={() => loadNextPage(announcementsQuery)}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={<ListFooterLoader loading={announcementsQuery.isFetchingNextPage} />}
       />
     </ScreenContainer>
   );
