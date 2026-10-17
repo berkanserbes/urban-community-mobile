@@ -1,6 +1,6 @@
 import { apiClient } from '@/lib/api/axios';
 import { unwrapApiData } from '@/lib/api/result';
-import type { ApiResponse } from '@/types/api.types';
+import type { ApiResponse, PagedResult, PaginationParams } from '@/types/api.types';
 
 export interface NotificationDto {
   id: string;
@@ -17,9 +17,9 @@ export interface UnreadCountDto {
 }
 
 export const notificationsApi = {
-  getNotifications: (params?: { isRead?: boolean }): Promise<NotificationDto[]> =>
+  getNotifications: (params: PaginationParams & { isRead?: boolean }): Promise<PagedResult<NotificationDto>> =>
     apiClient
-      .get<ApiResponse<NotificationDto[]>>('/api/notifications', { params })
+      .get<ApiResponse<PagedResult<NotificationDto>>>('/api/notifications', { params })
       .then((res) => unwrapApiData(res.data)),
 
   getUnreadCount: (): Promise<UnreadCountDto> =>

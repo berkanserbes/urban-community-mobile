@@ -10,6 +10,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { ListFooterLoader } from '@/components/ui/ListFooterLoader';
 import { NotificationCard } from '@/components/ui/NotificationCard';
 import { ScreenContainer } from '@/components/layout/ScreenContainer';
 import {
@@ -21,6 +22,7 @@ import {
 } from '@/features/notifications';
 import { useQueryClient } from '@tanstack/react-query';
 import type { NotificationDto } from '@/features/notifications';
+import { loadNextPage } from '@/lib/api/pagination';
 import { getApiErrorMessage } from '@/lib/utils/error';
 
 function handleNotificationPress(notification: NotificationDto) {
@@ -66,7 +68,9 @@ function handleDeleteNotification(item: NotificationDto, queryClient: ReturnType
 
 export default function NotificationsScreen() {
   const [refreshing, setRefreshing] = useState(false);
-  const { data: notifications = [], isLoading, isError, error, refetch } = useNotifications();
+  const notificationsQuery = useNotifications();
+  const { isLoading, isError, error, refetch } = notificationsQuery;
+  const notifications = notificationsQuery.data?.items ?? [];
   const { markAsRead, markAllAsRead: markAll } = useMarkAsRead();
   const { data: unreadData } = useUnreadCount();
   const queryClient = useQueryClient();
@@ -177,6 +181,9 @@ export default function NotificationsScreen() {
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2563EB" />
             }
+            onEndReached={() => loadNextPage(notificationsQuery)}
+            onEndReachedThreshold={0.5}
+            ListFooterComponent={<ListFooterLoader loading={notificationsQuery.isFetchingNextPage} />}
           />
         )}
       </View>

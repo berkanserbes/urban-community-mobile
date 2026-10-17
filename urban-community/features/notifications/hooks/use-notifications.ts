@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { DEFAULT_PAGE_SIZE, getNextPageParam, selectLoadedPages } from '@/lib/api/pagination';
 import { notificationsApi } from '../api/notifications.api';
 
 export const notificationKeys = {
@@ -8,9 +9,17 @@ export const notificationKeys = {
 };
 
 export function useNotifications(params?: { isRead?: boolean }) {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: notificationKeys.list(params?.isRead),
-    queryFn: () => notificationsApi.getNotifications(params),
+    queryFn: ({ pageParam }) =>
+      notificationsApi.getNotifications({
+        isRead: params?.isRead,
+        pageIndex: pageParam,
+        pageSize: DEFAULT_PAGE_SIZE,
+      }),
+    initialPageParam: 1,
+    getNextPageParam,
+    select: selectLoadedPages,
     staleTime: 30 * 1000,
   });
 }
