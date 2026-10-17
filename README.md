@@ -1,5 +1,6 @@
 # Urban Community — Mobile App
 
+[![CI](https://github.com/berkanserbes/urban-community-mobile/actions/workflows/ci.yml/badge.svg)](https://github.com/berkanserbes/urban-community-mobile/actions/workflows/ci.yml)
 ![Expo SDK 54](https://img.shields.io/badge/Expo-SDK%2054-000020)
 ![React Native](https://img.shields.io/badge/React%20Native-0.81-61DAFB)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6)
