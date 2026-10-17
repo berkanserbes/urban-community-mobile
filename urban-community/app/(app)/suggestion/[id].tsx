@@ -12,6 +12,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { LoadMoreButton } from '@/components/ui/LoadMoreButton';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { VoteButtons } from '@/components/ui/VoteButtons';
 import { ScreenContainer } from '@/components/layout/ScreenContainer';
@@ -26,13 +27,16 @@ import {
   useDeleteSuggestion,
   type VoteSummary,
 } from '@/features/suggestions';
+import { loadNextPage } from '@/lib/api/pagination';
 import { getApiErrorMessage } from '@/lib/utils/error';
 
 export default function SuggestionDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const currentUser = useAuthStore((s) => s.user);
   const { data: suggestion, isLoading, isError, error } = useSuggestionById(id ?? null);
-  const { data: comments = [] } = useComments(id ?? null);
+  const commentsQuery = useComments(id ?? null);
+  const comments = commentsQuery.data?.items ?? [];
+  const commentCount = commentsQuery.data?.totalCount ?? 0;
   const addComment = useAddComment(id ?? '');
   const { vote, removeVote } = useVote(id ?? '');
   const { data: voteSummary, isLoading: isVoteSummaryLoading } = useVoteSummary(id ?? null);
@@ -244,7 +248,7 @@ export default function SuggestionDetailScreen() {
             )}
 
             <Text className="text-lg font-bold text-gray-900 dark:text-white mb-4">
-              Yorumlar ({comments.length})
+              Yorumlar ({commentCount})
             </Text>
 
             {comments.length === 0 ? (
@@ -278,6 +282,13 @@ export default function SuggestionDetailScreen() {
                 </View>
               ))
             )}
+
+            <LoadMoreButton
+              visible={commentsQuery.hasNextPage}
+              loading={commentsQuery.isFetchingNextPage}
+              onPress={() => loadNextPage(commentsQuery)}
+              label="Daha fazla yorum yükle"
+            />
           </View>
         </ScrollView>
 

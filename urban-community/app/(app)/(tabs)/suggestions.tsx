@@ -3,10 +3,12 @@ import { useFocusEffect } from '@react-navigation/native';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
+import { ListFooterLoader } from '@/components/ui/ListFooterLoader';
 import { SuggestionCard } from '@/components/ui/SuggestionCard';
 import { ScreenContainer } from '@/components/layout/ScreenContainer';
 import { useAuthStore } from '@/features/auth';
 import { useProfile } from '@/features/user';
+import { loadNextPage } from '@/lib/api/pagination';
 import { getApiErrorMessage } from '@/lib/utils/error';
 import {
   getNextVoteSummary,
@@ -32,16 +34,12 @@ export default function SuggestionsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const neighborhoodId = profile?.neighborhoodId ?? user?.neighborhoodId ?? undefined;
 
-  const {
-    data: suggestions = [],
-    isLoading,
-    isError,
-    error,
-    refetch,
-  } = useSuggestions({
+  const suggestionsQuery = useSuggestions({
     neighborhoodId,
     status: activeFilter ?? undefined,
   });
+  const { isLoading, isError, error, refetch } = suggestionsQuery;
+  const suggestions = suggestionsQuery.data?.items ?? [];
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -131,6 +129,9 @@ export default function SuggestionsScreen() {
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2563EB" />
             }
+            onEndReached={() => loadNextPage(suggestionsQuery)}
+            onEndReachedThreshold={0.5}
+            ListFooterComponent={<ListFooterLoader loading={suggestionsQuery.isFetchingNextPage} />}
           />
         )}
 

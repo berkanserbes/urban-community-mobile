@@ -1,5 +1,6 @@
 import { apiClient } from '@/lib/api/axios';
-import type { ApiResponse } from '@/types/api.types';
+import { mapPagedResult } from '@/lib/api/pagination';
+import type { ApiResponse, PagedResult, PaginationParams } from '@/types/api.types';
 
 export type SuggestionStatus = 'Active' | 'Reviewing' | 'Implementation' | 'Closed';
 
@@ -61,17 +62,17 @@ function unwrapApiData<T>(response: ApiResponse<T>): T {
 }
 
 export const suggestionsApi = {
-  getSuggestions: (params: {
+  getSuggestions: (params: PaginationParams & {
     status?: SuggestionStatus;
     userId?: string;
     neighborhoodId?: string;
     districtId?: string;
     provinceId?: string;
-  }): Promise<SuggestionListItem[]> =>
+  }): Promise<PagedResult<SuggestionListItem>> =>
     apiClient
-      .get<ApiResponse<SuggestionListItemResponse[]>>('/api/suggestions', { params })
+      .get<ApiResponse<PagedResult<SuggestionListItemResponse>>>('/api/suggestions', { params })
       .then((res) =>
-        unwrapApiData(res.data).map((item) => {
+        mapPagedResult(unwrapApiData(res.data), (item) => {
           const { currentUserIsUpvote, ...suggestion } = item;
 
           return {
@@ -132,9 +133,11 @@ export const suggestionsApi = {
         };
       }),
 
-  getComments: (suggestionId: string): Promise<SuggestionComment[]> =>
+  getComments: (suggestionId: string, params: PaginationParams): Promise<PagedResult<SuggestionComment>> =>
     apiClient
-      .get<ApiResponse<SuggestionComment[]>>(`/api/suggestions/${suggestionId}/comments`)
+      .get<ApiResponse<PagedResult<SuggestionComment>>>(`/api/suggestions/${suggestionId}/comments`, {
+        params,
+      })
       .then((res) => unwrapApiData(res.data)),
 
   addComment: (suggestionId: string, content: string) =>

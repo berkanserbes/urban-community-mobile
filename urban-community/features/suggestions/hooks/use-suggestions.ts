@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { DEFAULT_PAGE_SIZE, getNextPageParam, selectLoadedPages } from '@/lib/api/pagination';
 import { suggestionsApi, type SuggestionStatus } from '../api/suggestions.api';
 
 type SuggestionListParams = {
@@ -38,9 +39,17 @@ function normalizeSuggestionParams(params: SuggestionListParams): SuggestionList
 export function useSuggestions(params: SuggestionListParams) {
   const normalizedParams = normalizeSuggestionParams(params);
 
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: suggestionKeys.list(normalizedParams as Record<string, string | undefined>),
-    queryFn: () => suggestionsApi.getSuggestions(normalizedParams),
+    queryFn: ({ pageParam }) =>
+      suggestionsApi.getSuggestions({
+        ...normalizedParams,
+        pageIndex: pageParam,
+        pageSize: DEFAULT_PAGE_SIZE,
+      }),
+    initialPageParam: 1,
+    getNextPageParam,
+    select: selectLoadedPages,
     staleTime: 60 * 1000,
   });
 }
