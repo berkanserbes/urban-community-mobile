@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/api/axios';
-import type { ApiResponse } from '@/types/api.types';
+import type { ApiResponse, PagedResult, PaginationParams } from '@/types/api.types';
 
 export type ReportStatus =
   | 'PendingReview'
@@ -168,18 +168,18 @@ function logCreateReportPayload(data: CreateReportData) {
 }
 
 export const reportsApi = {
-  getReports: (params: {
+  getReports: (params: PaginationParams & {
     scope?: string;
     status?: ReportStatus;
     categoryId?: string;
-  }): Promise<ReportListItem[]> =>
+  }): Promise<PagedResult<ReportListItem>> =>
     apiClient
-      .get<ApiResponse<ReportListItem[]>>('/api/reports', { params })
+      .get<ApiResponse<PagedResult<ReportListItem>>>('/api/reports', { params })
       .then((res) => unwrapApiData(res.data)),
 
-  getMyReports: (): Promise<ReportListItem[]> =>
+  getMyReports: (params: PaginationParams & { status?: ReportStatus }): Promise<PagedResult<ReportListItem>> =>
     apiClient
-      .get<ApiResponse<ReportListItem[]>>('/api/reports/mine')
+      .get<ApiResponse<PagedResult<ReportListItem>>>('/api/reports/mine', { params })
       .then((res) => unwrapApiData(res.data)),
 
   getReportById: (id: string): Promise<ReportDetail> =>

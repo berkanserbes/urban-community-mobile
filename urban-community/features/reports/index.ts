@@ -9,7 +9,7 @@ export type {
   CategoryDto,
   CreateReportData,
 } from './api/reports.api';
-export { useReports, useMyReports } from './hooks/use-reports';
+export { useReports, useLatestReports, useMyReports } from './hooks/use-reports';
 export { useReportById } from './hooks/use-report';
 export { useCreateReport } from './hooks/use-create-report';
 export { useCategories } from './hooks/use-categories';

@@ -2,9 +2,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, Text, TouchableOpacity, View } from 'react-native';
+import { ListFooterLoader } from '@/components/ui/ListFooterLoader';
 import { ReportCard } from '@/components/ui/ReportCard';
 import { ScreenContainer } from '@/components/layout/ScreenContainer';
 import { useMyReports, useReports, type ReportStatus } from '@/features/reports';
+import { loadNextPage } from '@/lib/api/pagination';
 import { getApiErrorMessage } from '@/lib/utils/error';
 
 const STATUS_FILTERS: { label: string; value: ReportStatus | null }[] = [
@@ -21,39 +23,19 @@ export default function ReportsScreen() {
   const [scope, setScope] = useState('Neighborhood');
   const [refreshing, setRefreshing] = useState(false);
 
-  const {
-    data: allReports = [],
-    isLoading: loadingAll,
-    isError: isAllError,
-    error: allError,
-    refetch: refetchAll,
-  } = useReports({
-    scope,
-    status: activeFilter ?? undefined,
-  });
+  const status = activeFilter ?? undefined;
+  const allReportsQuery = useReports({ scope, status });
+  const myReportsQuery = useMyReports({ status });
 
-  const {
-    data: myReports = [],
-    isLoading: loadingMine,
-    isError: isMineError,
-    error: mineError,
-    refetch: refetchMine,
-  } = useMyReports();
-
-  const reports = showMine ? myReports : allReports;
-  const isLoading = showMine ? loadingMine : loadingAll;
-  const isError = showMine ? isMineError : isAllError;
-  const error = showMine ? mineError : allError;
+  const reportsQuery = showMine ? myReportsQuery : allReportsQuery;
+  const { isLoading, isError, error, refetch } = reportsQuery;
+  const reports = reportsQuery.data?.items ?? [];
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    if (showMine) {
-      await refetchMine();
-    } else {
-      await refetchAll();
-    }
+    await refetch();
     setRefreshing(false);
-  }, [showMine, refetchMine, refetchAll]);
+  }, [refetch]);
 
   const scopeText = scope === 'Neighborhood' ? 'Mahallede' : scope === 'District' ? 'İlçede' : 'İlde';
   const activeFilterLabel = activeFilter ? STATUS_FILTERS.find((f) => f.value === activeFilter)?.label : null;
@@ -101,27 +83,25 @@ export default function ReportsScreen() {
           </View>
         </View>
 
-        {!showMine && (
-          <View className="px-4 pb-2">
-            <FlatList
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              data={STATUS_FILTERS}
-              keyExtractor={(item) => item.label}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  onPress={() => setActiveFilter(item.value)}
-                  activeOpacity={0.7}
-                  className={`px-3 py-1.5 rounded-full mr-2 ${activeFilter === item.value ? 'bg-gray-200 dark:bg-gray-700' : 'bg-gray-50 dark:bg-gray-800/50'}`}
-                >
-                  <Text className={`text-xs ${activeFilter === item.value ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
-                    {item.label}
-                  </Text>
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-        )}
+        <View className="px-4 pb-2">
+          <FlatList
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            data={STATUS_FILTERS}
+            keyExtractor={(item) => item.label}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                onPress={() => setActiveFilter(item.value)}
+                activeOpacity={0.7}
+                className={`px-3 py-1.5 rounded-full mr-2 ${activeFilter === item.value ? 'bg-gray-200 dark:bg-gray-700' : 'bg-gray-50 dark:bg-gray-800/50'}`}
+              >
+                <Text className={`text-xs ${activeFilter === item.value ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
+                  {item.label}
+                </Text>
+              </TouchableOpacity>
+            )}
+          />
+        </View>
 
         {isLoading && reports.length === 0 ? (
           <View className="flex-1 items-center justify-center">
@@ -138,7 +118,11 @@ export default function ReportsScreen() {
           <View className="flex-1 items-center justify-center px-4">
             <Ionicons name="document-text-outline" size={48} color="#cbd5e1" />
             <Text className="text-base text-gray-400 mt-3 text-center">
-              {showMine ? 'Henüz rapor oluşturmadın' : activeFilterLabel ? `${activeFilterLabel} durumunda rapor bulunamadı` : `${scopeText} henüz rapor yok`}
+              {showMine
+                ? activeFilterLabel
+                  ? `${activeFilterLabel} durumunda raporun yok`
+                  : 'Henüz rapor oluşturmadın'
+                : activeFilterLabel ? `${activeFilterLabel} durumunda rapor bulunamadı` : `${scopeText} henüz rapor yok`}
             </Text>
             <TouchableOpacity
               onPress={() => router.push('/(app)/report/create' as any)}
@@ -162,6 +146,9 @@ export default function ReportsScreen() {
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2563EB" />
             }
+            onEndReached={() => loadNextPage(reportsQuery)}
+            onEndReachedThreshold={0.5}
+            ListFooterComponent={<ListFooterLoader loading={reportsQuery.isFetchingNextPage} />}
           />
         )}
 

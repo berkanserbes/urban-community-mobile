@@ -9,13 +9,15 @@ import { NotificationIcon } from '@/components/ui/NotificationIcon';
 import { ReportCard } from '@/components/ui/ReportCard';
 import { useAuthStore } from '@/features/auth';
 import { useAnnouncements } from '@/features/announcements';
-import { useReports } from '@/features/reports';
+import { useLatestReports } from '@/features/reports';
 import { useCommunityPosts } from '@/features/community';
 import { useProfile } from '@/features/user';
 import { useUnreadCount } from '@/features/notifications';
 import { toAbsoluteUrl } from '@/lib/utils/url';
 import { getApiErrorMessage } from '@/lib/utils/error';
 import { useCallback, useState } from 'react';
+
+const FEED_PREVIEW_COUNT = 3;
 
 function Avatar({ imageUrl, initials }: { imageUrl: string | null; initials: string }) {
   if (imageUrl) {
@@ -45,9 +47,7 @@ export default function HomeScreen() {
     isError: reportsError,
     error: reportsErrorData,
     refetch: refetchReports,
-  } = useReports({
-    scope: 'Neighborhood',
-  });
+  } = useLatestReports({ scope: 'Neighborhood' }, FEED_PREVIEW_COUNT);
 
   const {
     data: announcements = [],
@@ -82,7 +82,7 @@ export default function HomeScreen() {
     (displayUser?.firstName?.[0] ?? '').toUpperCase() +
     (displayUser?.lastName?.[0] ?? '').toUpperCase();
   const fullName = displayUser ? `${displayUser.firstName} ${displayUser.lastName}` : '';
-  const recentReports = reports.slice(0, 3);
+  const recentReports = reports;
   const recentAnnouncements = announcements.slice(0, 3);
   const recentPosts = communityPosts.slice(0, 3);
 
