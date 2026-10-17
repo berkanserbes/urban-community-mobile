@@ -11,6 +11,10 @@ updates:
     # Expo pins these packages to versions that match the SDK. Upgrade them together with
     # the SDK through "npx expo install --fix" instead of one by one.
     ignore:
+      # Major updates are planned, tested and applied by hand: CI cannot catch every
+      # runtime break (Redis, Aspire, routing), and they often need code changes.
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
       - dependency-name: "expo"
       - dependency-name: "expo-*"
       - dependency-name: "@expo/*"
