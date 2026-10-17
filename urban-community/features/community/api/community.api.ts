@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/api/axios';
-import type { ApiResponse } from '@/types/api.types';
+import type { ApiResponse, PagedResult, PaginationParams } from '@/types/api.types';
 
 export type PostType = 'HelpRequested' | 'BorrowTool' | 'LostAndFound';
 export type CommunityPostStatus = 'Active' | 'Reserved' | 'Resolved' | 'Expired' | 'Archived';
@@ -87,7 +87,7 @@ function unwrapApiData<T>(response: ApiResponse<T>): T {
 }
 
 export const communityApi = {
-  getPosts: (params: {
+  getPosts: (params: PaginationParams & {
     scope?: CommunityPostScope;
     provinceId?: string;
     districtId?: string;
@@ -95,9 +95,9 @@ export const communityApi = {
     status?: CommunityPostStatus;
     type?: PostType;
     userId?: string;
-  }): Promise<CommunityPostListItem[]> =>
+  }): Promise<PagedResult<CommunityPostListItem>> =>
     apiClient
-      .get<ApiResponse<CommunityPostListItem[]>>('/api/community-posts', { params })
+      .get<ApiResponse<PagedResult<CommunityPostListItem>>>('/api/community-posts', { params })
       .then((res) => unwrapApiData(res.data)),
 
   getPostById: (id: string): Promise<CommunityPostDetail> =>
@@ -128,9 +128,11 @@ export const communityApi = {
       .then((res) => unwrapApiData(res.data));
   },
 
-  getComments: (postId: string): Promise<CommunityPostComment[]> =>
+  getComments: (postId: string, params: PaginationParams): Promise<PagedResult<CommunityPostComment>> =>
     apiClient
-      .get<ApiResponse<CommunityPostComment[]>>(`/api/community-posts/${postId}/comments`)
+      .get<ApiResponse<PagedResult<CommunityPostComment>>>(`/api/community-posts/${postId}/comments`, {
+        params,
+      })
       .then((res) => unwrapApiData(res.data)),
 
   addComment: (postId: string, content: string) =>

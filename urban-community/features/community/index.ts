@@ -9,7 +9,7 @@ export type {
   CommunityPostScope,
   CreateCommunityPostData,
 } from './api/community.api';
-export { useCommunityPosts, communityKeys } from './hooks/use-posts';
+export { useCommunityPosts, useLatestCommunityPosts, communityKeys } from './hooks/use-posts';
 export { useCommunityPostById } from './hooks/use-post';
 export { useCreateCommunityPost } from './hooks/use-create-post';
 export { useDeletePost } from './hooks/use-delete-post';

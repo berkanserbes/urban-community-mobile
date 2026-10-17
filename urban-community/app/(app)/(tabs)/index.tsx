@@ -10,7 +10,7 @@ import { ReportCard } from '@/components/ui/ReportCard';
 import { useAuthStore } from '@/features/auth';
 import { useAnnouncements } from '@/features/announcements';
 import { useLatestReports } from '@/features/reports';
-import { useCommunityPosts } from '@/features/community';
+import { useLatestCommunityPosts } from '@/features/community';
 import { useProfile } from '@/features/user';
 import { useUnreadCount } from '@/features/notifications';
 import { toAbsoluteUrl } from '@/lib/utils/url';
@@ -67,7 +67,7 @@ export default function HomeScreen() {
     isError: communityError,
     error: communityErrorData,
     refetch: refetchCommunity,
-  } = useCommunityPosts({});
+  } = useLatestCommunityPosts({}, FEED_PREVIEW_COUNT);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -84,7 +84,7 @@ export default function HomeScreen() {
   const fullName = displayUser ? `${displayUser.firstName} ${displayUser.lastName}` : '';
   const recentReports = reports;
   const recentAnnouncements = announcements.slice(0, 3);
-  const recentPosts = communityPosts.slice(0, 3);
+  const recentPosts = communityPosts;
 
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-gray-900" edges={['top', 'left', 'right']}>

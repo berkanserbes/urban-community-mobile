@@ -3,8 +3,10 @@ import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
 import { CommunityPostCard } from '@/components/ui/CommunityPostCard';
+import { ListFooterLoader } from '@/components/ui/ListFooterLoader';
 import { ScreenContainer } from '@/components/layout/ScreenContainer';
 import { useCommunityPosts, type PostType } from '@/features/community';
+import { loadNextPage } from '@/lib/api/pagination';
 import { getApiErrorMessage } from '@/lib/utils/error';
 
 const TYPE_FILTERS: { label: string; value: PostType | null; icon: keyof typeof Ionicons.glyphMap }[] = [
@@ -18,15 +20,11 @@ export default function CommunityScreen() {
   const [activeFilter, setActiveFilter] = useState<PostType | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  const {
-    data: posts = [],
-    isLoading,
-    isError,
-    error,
-    refetch,
-  } = useCommunityPosts({
+  const postsQuery = useCommunityPosts({
     type: activeFilter ?? undefined,
   });
+  const { isLoading, isError, error, refetch } = postsQuery;
+  const posts = postsQuery.data?.items ?? [];
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -115,6 +113,9 @@ export default function CommunityScreen() {
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2563EB" />
             }
+            onEndReached={() => loadNextPage(postsQuery)}
+            onEndReachedThreshold={0.5}
+            ListFooterComponent={<ListFooterLoader loading={postsQuery.isFetchingNextPage} />}
           />
         )}
 

@@ -16,6 +16,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { LoadMoreButton } from '@/components/ui/LoadMoreButton';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { ScreenContainer } from '@/components/layout/ScreenContainer';
 import { useAuthStore } from '@/features/auth';
@@ -26,6 +27,7 @@ import {
   useAddComment,
 } from '@/features/community';
 import { toAbsoluteUrl } from '@/lib/utils/url';
+import { loadNextPage } from '@/lib/api/pagination';
 import { getApiErrorMessage } from '@/lib/utils/error';
 
 const TYPE_LABELS: Record<string, { label: string; icon: keyof typeof Ionicons.glyphMap; color: string }> = {
@@ -39,7 +41,9 @@ export default function CommunityPostDetailScreen() {
   const currentUser = useAuthStore((s) => s.user);
   const { data: post, isLoading, isError, error } = useCommunityPostById(id ?? null);
   const deletePost = useDeletePost();
-  const { data: comments = [] } = usePostComments(id ?? null);
+  const commentsQuery = usePostComments(id ?? null);
+  const comments = commentsQuery.data?.items ?? [];
+  const commentCount = commentsQuery.data?.totalCount ?? 0;
   const addComment = useAddComment(id ?? '');
   const [newComment, setNewComment] = useState('');
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
@@ -269,7 +273,7 @@ export default function CommunityPostDetailScreen() {
             )}
 
             <Text className="text-lg font-bold text-gray-900 dark:text-white mb-4">
-              Yorumlar ({comments.length})
+              Yorumlar ({commentCount})
             </Text>
 
             {comments.length === 0 ? (
@@ -302,6 +306,13 @@ export default function CommunityPostDetailScreen() {
                 </View>
               ))
             )}
+
+            <LoadMoreButton
+              visible={commentsQuery.hasNextPage}
+              loading={commentsQuery.isFetchingNextPage}
+              onPress={() => loadNextPage(commentsQuery)}
+              label="Daha fazla yorum yükle"
+            />
           </View>
         </ScrollView>
 
