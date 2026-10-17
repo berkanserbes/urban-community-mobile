@@ -4,10 +4,18 @@ export interface ApiResponse<T> {
   errors?: string[];
 }
 
-export interface PaginatedResponse<T> {
+/** Mirrors the backend PagedResult<T>. pageIndex is 1-based. */
+export interface PagedResult<T> {
   items: T[];
-  totalCount: number;
-  pageNumber: number;
+  pageIndex: number;
   pageSize: number;
+  totalCount: number;
   totalPages: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+}
+
+export interface PaginationParams {
+  pageIndex?: number;
+  pageSize?: number;
 }
